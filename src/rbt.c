@@ -8,7 +8,7 @@
 // #define SHOW_STEPS       // A existência dessa diretiva controla a impressão detalhada dos testes
 
 typedef enum Color {
-    RED = 0,
+    RED = 0, 
     BLACK = 1
 } Color;
 
