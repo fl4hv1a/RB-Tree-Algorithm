@@ -404,7 +404,7 @@ void rb_insert(BST *T, Node *z) {
     
     if(y == NULL) {
         T->root = z;
-    } else if(z->key < x->key) {
+    } else if(z->key < y->key) {
         y->left = z;
     } else y->right = z;
 
