@@ -549,6 +549,36 @@ void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore r
     }
 }
 
+/* void rb_delete_fixup(BST *T, Node *x, Node *x_parent){
+    Node *w;
+    while(x != T -> root && color_of(x) == BLACK){
+        if(x == x_parent -> left){
+            w = x_parent -> right;
+            if(w -> color == RED){
+                w -> color = BLACK;
+                x_parent -> color = RED;
+                left_rotate(T, x_parent);
+                w = x_parent -> right;
+            }if(color_of(w -> left) == BLACK && color_of(w -> right) == BLACK){
+                w -> color = RED;
+                x = x_parent;
+                x_parent = x -> parent;
+            } else {
+            if(color_of(w -> right) == BLACK){
+                w -> left -> color = BLACK;
+                w -> color = RED;
+                right_rotate(T, w);
+                w = x_parent -> right;
+            }
+            w -> color = x_parent -> color;
+            x_parent -> color = BLACK;
+            w -> right -> color = BLACK;
+            left_rotate(T, x_parent);
+            x = T -> root;
+        }
+    }
+}*/
+
 /**
  * @brief Calcula recursivamente o tamanho (quantidade de nós) de uma subárvore BST.
  * 
