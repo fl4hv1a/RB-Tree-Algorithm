@@ -386,8 +386,31 @@ void rb_insert_fixup(BST *T, Node *z) {
 }
 
 void rb_insert(BST *T, Node *z) {
-    ;
-    // Provavelmente só insere em BST e depois chama "rb_insert_fixup"
+    Node *y;
+    Node *x;
+
+    y = NULL;
+    x = NULL;
+
+    while(x != T->NULL) {
+        y = x;
+
+        if (z->key < x->key) {
+            x = x->left;
+        } else x = x->right;
+    }
+    z->parent = y;
+    if(y != T->NULL) {
+        T->root = z;
+    } else if(z->key < x->key) {
+        y->left = z;
+    } else y->right = z;
+
+    z->left = T->NULL;
+    z->right = T->NULL;
+    z->color = RED;
+
+    rb_insert_fixup(T,z);
 }
 
 /**
