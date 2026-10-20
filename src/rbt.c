@@ -386,33 +386,33 @@ void rb_insert_fixup(BST *T, Node *z) {
 }
 
 void rb_insert(BST *T, Node *z) {
-    Node *y;
-    Node *x;
+    Node *y; // pai de x
+    Node *x; // posição atual que no caso será a raiz
 
-    y = NULL;
+    y = NULL; 
     x = T->root;
 
-    while(x != NULL) {
-        y = x;
+    while(x != NULL) { // enquanto x não for nulo, desce árvore
+        y = x; 
 
-        if (z->key < x->key) {
+        if (z->key < x->key) { // se a chave for menor que x, desce para o nó à esquerda, do contrário desce pela direita
             x = x->left;
         } else x = x->right;
     }
     
-    z->parent = y;
+    z->parent = y; // seu pai recebe o nó y
     
-    if(y == NULL) {
+    if(y == NULL) { // se o pai não existir então é a raiz
         T->root = z;
-    } else if(z->key < y->key) {
+    } else if(z->key < y->key) { // se z for menor que y, é o filho esquerdo, do contrário é o filho direito
         y->left = z;
     } else y->right = z;
 
     z->left = NULL;
     z->right = NULL;
-    z->color = RED;
+    z->color = RED; // seguindo a definição de árvore vermelho e preto o nó inserido fica vermelho
 
-    rb_insert_fixup(T,z);
+    rb_insert_fixup(T,z); // chama o fixup para corrigir a árvore se não mais seguir todas as regras
 }
 
 /**
