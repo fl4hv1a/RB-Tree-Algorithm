@@ -390,24 +390,26 @@ void rb_insert(BST *T, Node *z) {
     Node *x;
 
     y = NULL;
-    x = NULL;
+    x = T->root;
 
-    while(x != T->NULL) {
+    while(x != NULL) {
         y = x;
 
         if (z->key < x->key) {
             x = x->left;
         } else x = x->right;
     }
+    
     z->parent = y;
-    if(y != T->NULL) {
+    
+    if(y == NULL) {
         T->root = z;
     } else if(z->key < x->key) {
         y->left = z;
     } else y->right = z;
 
-    z->left = T->NULL;
-    z->right = T->NULL;
+    z->left = NULL;
+    z->right = NULL;
     z->color = RED;
 
     rb_insert_fixup(T,z);
