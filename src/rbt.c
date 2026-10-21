@@ -591,9 +591,11 @@ void rb_delete_fixup(BST *T, Node *x){        //Corrige a árvore após remoçã
                 
             }if(color_of(w -> left) == BLACK && color_of(w -> right) == BLACK){        //irmão preto com dois filhos pretos
                 w -> color = RED;                                                      //Muda a cor de 'w' para vermelho, o lado do irmão perde um preto
-                x = x -> parent;                                                       //
-            } else {
-            if(color_of(w -> right) == BLACK){
+                x = x -> parent;                                                       //e fica com a mesma altura-preta do lado de 'x' e o pai fica com um preto a menos em relação ao resto da árvore
+                                                                                       //o preto extra sobe, 'x' vira pai e o laço roda de novo a partir dele (?)
+                
+            } else {                                  //O irmão é preto e pelo menos um filho é vermelho
+            if(color_of(w -> right) == BLACK){        //
                 w -> left -> color = BLACK;
                 w -> color = RED;
                 right_rotate(T, w);
