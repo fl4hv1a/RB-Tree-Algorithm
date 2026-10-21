@@ -8,7 +8,7 @@
 // #define SHOW_STEPS       // A existência dessa diretiva controla a impressão detalhada dos testes
 
 typedef enum Color {
-    RED = 0, 
+    RED = 0,
     BLACK = 1
 } Color;
 
@@ -35,58 +35,6 @@ typedef struct BinarySearchTree {
  */
 int max(const int a, const int b) {
     return (a > b) ? a : b;
-}
-
-/**
- * @brief Retorna a altura de um nó (distância até o nó folha mais profundo entre as subárvores filhas).
- * 
- * @details Retorna diretamente a altura do nó se ele for não-nulo e -1 caso contrário.
- *          Retornar -1 em nós nulos torna o cálculo do balanceamento mais simples
- *          para nós folha.
- * 
- * @param[in] n Ponteiro para o nó do qual se deseja receber a altura.
- * 
- * @return Altura do nó `n`.
- */
-int height(Node *n) {
-    if(n) {
-        return n->height;
-    } else {
-        // Se 'n' for nulo, retornamos -1 para facilitar o cálculo da altura de nós folha.
-        return -1;
-    }
-}
-
-/**
- * @brief Recalcula e atualiza a altura de um nó.
- * 
- * @param[in] n Ponteiro para o nó que será atualizado.
- */
-void update_height(Node *n) {
-    if (n) {
-        // Se 'n' for folha, a expressão se torna "1 + (-1) = 0"
-        // (já que a altura de todo nó nulo é -1 por definição)
-        n->height = 1 + max(height(n->left), height(n->right));
-    }
-}
-
-/**
- * @brief Calcula o fator de balanceamento (FB) de um nó.
- * 
- * @details Retorna a diferença entre as alturas das subárvores filhas, ou `0`
- *          caso o nó seja nulo (para facilitar o cálculo do FB de nós folha).
- * 
- * @param[in] n Ponteiro para o nó do qual será calculado o balanceamento.
- * 
- * @return O fator de balanceamento do nó `n`.
- * 
- * @retval - Um valor `negativo`: Se a altura da subárvore direita for maior que a esquerda;
- * @retval - `0`: Se as duas subárvores tiverem a mesma altura;
- * @retval - Um valor `positivo`: Se a altura da subárvore esquerda for maior que a direita.
- */
-int get_balance(Node *n) {
-    if (!n) return 0; // Se o nó for nulo, já está "balanceado"
-    return height(n->left) - height(n->right);
 }
 
 /**
@@ -172,47 +120,6 @@ void left_rotate(BST *T, Node *n) {
     // Atualiza as alturas
     update_height(n);
     update_height(rightN);
-}
-
-/**
- * @brief Rebalanceia, por meio de rotações, um nó de uma árvore AVL.
- * 
- * @param[in] T Ponteiro para a árvore AVL onde será realizado o rebalanceamento.
- * @param[in] n Ponteiro para o nó que será rebalanceado.
- */
-void avl_node_rebalance(BST *T, Node *n) {
-    int balance = get_balance(n);
-    if (balance > ALLOWED_IMBALANCE) {
-        if (get_balance(n->left) < 0) { 
-            left_rotate(T, n->left); // Metade da rotação dupla à direita
-        }
-
-        right_rotate(T, n); // Rotação simples à direita
-    } else if (balance < -ALLOWED_IMBALANCE) {
-        if (get_balance(n->right) > 0) {
-            right_rotate(T, n->right); // Metade da rotação dupla à esquerda
-        }
-
-        left_rotate(T, n); // Rotação simples à esquerda
-    }
-    // Se `-ALLOWED_IMBALANCE < balance < ALLOWED_IMBALANCE`:
-    //      `n` já está balanceado, então não fazemos nada
-}
-
-/**
- * @brief Rebalanceia uma árvore AVL após uma modificação estrutural.
- * 
- * @param[in] T Ponteiro para a árvore AVL onde acontecerá o rebalanceamento.
- * @param[in] n Ponteiro para o nó mais profundo onde o balanceamento pode ter sido alterado.
- */
-void avl_balance(BST *T, Node *n) {
-    while (n) {
-        update_height(n); // Atualiza a altura do nó atual
-        
-        avl_node_rebalance(T, n); // Rebalanceia o nó atual
-        
-        n = n->parent; // Sobe para o próximo nó ancestral
-    }
 }
 
 /**
@@ -343,20 +250,6 @@ void bst_insert(BST *T, Node *z) {
         // Se `z` tiver uma chave maior que a do seu pai, inserimos `z` à direita
         y->right = z;
     }
-}
-
-/**
- * @brief Insere um novo nó em uma árvore AVL e refaz o balanceamento.
- * 
- * @param[in] T Ponteiro para a árvore AVL onde o nó deve ser inserido.
- * @param[in] z Ponteiro para o nó a ser inserido.
- */
-void avl_insert(BST *T, Node *z) {
-    // Começa fazendo uma inserção BST comum
-    bst_insert(T, z);
-
-    // Começa a rebalancear a partir do nó inserido subindo até a raiz
-    avl_balance(T, z);
 }
 
 void rb_insert_fixup(BST *T, Node *z) {
@@ -518,20 +411,6 @@ Node *bst_delete(BST *T, Node *z) {
     node_free(z);
 
     return fix_node_pin;
-}
-
-/**
- * @brief Remove, rebalanceia e desaloca um nó de uma árvore AVL.
- * 
- * @param[in] T Ponteiro para a árvore AVL onde o nó será removido.
- * @param[in] z Ponteiro para o nó que será removido.
- */
-void avl_delete(BST *T, Node *z) {
-    // Primeiro faz uma remoção BST simples
-    Node *fix_node_pin = bst_delete(T, z);
-
-    // Depois começa o rebalanceamento subindo até chegar na raiz
-    avl_balance(T, fix_node_pin);
 }
 
 void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore rubro-negra
@@ -917,26 +796,6 @@ int arr_remove(int *arr, int N, int value) {
 }
 
 /**
- * @brief Computa a altura real de uma subárvore percorrendo completamente todas as suas subárvores filhas.
- * 
- * @param[in] n Ponteiro para o nó raiz da subárvore a ser computada.
- * 
- * @return A altura real calculada.
- * 
- * @retval - Um inteiro `positivo`: Se `n` for uma subárvore não-nula;
- * @retval - `-1`: Se `n` for uma subárvore vazia (`NULL`).
- */
-int compute_real_height(Node *n) {
-    if (!n) return -1; // Passo base: subárvore vazia
-    
-    // Passo recursivo: Cálcula as alturas das subárvores filhas
-    int left_h = compute_real_height(n->left);
-    int right_h = compute_real_height(n->right);
-    
-    return 1 + max(left_h, right_h);
-}
-
-/**
  * @brief Verifica recursivamente se todos os nós de uma subárvore respeitam as propriedades BST.
  * 
  * @param[in] n Ponteiro para o nó raiz da subárvore a ser validada.
@@ -973,37 +832,37 @@ bool valid_bst(Node *n, Node *min_node, Node *max_node) {
  * @retval - `true`: Se for uma AVL perfeitamente válida;
  * @retval - `false`: Caso alguma propriedade seja violada.
  */
-bool valid_avl(Node *n) {
-    if (!n) return true; // Uma subárvore vazia é uma AVL válida
+// bool valid_avl(Node *n) {
+//     if (!n) return true; // Uma subárvore vazia é uma AVL válida
 
-    // Valida se a altura armazenada no nó atual condiz com a sua altura real
-    if (n->height != compute_real_height(n)) return false;
+//     // Valida se a altura armazenada no nó atual condiz com a sua altura real
+//     if (n->height != compute_real_height(n)) return false;
 
-    // Valida se o balanceamento retornado no nó atual condiz com o seu balanceamento real
-    int balance = get_balance(n);
-    if (balance != compute_real_height(n->left) - compute_real_height(n->right)) {
-        return false;
-    }
+//     // Valida se o balanceamento retornado no nó atual condiz com o seu balanceamento real
+//     int balance = get_balance(n);
+//     if (balance != compute_real_height(n->left) - compute_real_height(n->right)) {
+//         return false;
+//     }
 
-    // Valida o fator de balanceamento
-    if (balance < -ALLOWED_IMBALANCE || balance > ALLOWED_IMBALANCE) {
-        return false; // O nó está desbalanceado, então não é uma AVL válida
-    }
+//     // Valida o fator de balanceamento
+//     if (balance < -ALLOWED_IMBALANCE || balance > ALLOWED_IMBALANCE) {
+//         return false; // O nó está desbalanceado, então não é uma AVL válida
+//     }
 
-    // Valida se os ponteiros estão corretamente bidirecionais
-    if (n->left && n->left->parent != n) {
-        return false;
-    }
-    if (n->right && n->right->parent != n) {
-        return false;
-    }
+//     // Valida se os ponteiros estão corretamente bidirecionais
+//     if (n->left && n->left->parent != n) {
+//         return false;
+//     }
+//     if (n->right && n->right->parent != n) {
+//         return false;
+//     }
 
-    // Valida a propriedade BST (menores à esquerda e maiores à direita)
-    if (!valid_bst(n, NULL, NULL)) return false;
+//     // Valida a propriedade BST (menores à esquerda e maiores à direita)
+//     if (!valid_bst(n, NULL, NULL)) return false;
 
-    // Continua a validação descendo recursivamente para todos os nós descendentes
-    return valid_avl(n->left) && valid_avl(n->right);
-}
+//     // Continua a validação descendo recursivamente para todos os nós descendentes
+//     return valid_avl(n->left) && valid_avl(n->right);
+// }
 
 /**
  * @brief Valida exaustivamente uma estrutura AVL testando todas as permutações 
@@ -1023,84 +882,84 @@ bool valid_avl(Node *n) {
  * @retval - `5`: Inconsistência de dados - `bst_check` falhou após uma REMOÇÃO;
  * @retval - `6`: Estrutura inválida - `valid_avl` falhou após uma REMOÇÃO.
  */
-int brute_force_avl_validation(const int *data_base, const int N, unsigned long long *tested_count) {
-    int status = 0; // Inicializado com "Sucesso"
+// int brute_force_avl_validation(const int *data_base, const int N, unsigned long long *tested_count) {
+//     int status = 0; // Inicializado com "Sucesso"
 
-    int *data_insert = (int *) malloc(sizeof(int) * N);
-    int *data_remove = (int *) malloc(sizeof(int) * N);
-    int *arr = (int *) malloc(sizeof(int) * N);
+//     int *data_insert = (int *) malloc(sizeof(int) * N);
+//     int *data_remove = (int *) malloc(sizeof(int) * N);
+//     int *arr = (int *) malloc(sizeof(int) * N);
 
-    if (!data_insert || !data_remove || !arr) {
-        status = 1;
-        goto cleanup;
-    }
+//     if (!data_insert || !data_remove || !arr) {
+//         status = 1;
+//         goto cleanup;
+//     }
 
-    memcpy(data_insert, data_base, sizeof(int) * N);
-    *tested_count = 0; // O número de permutações validadas com sucesso
+//     memcpy(data_insert, data_base, sizeof(int) * N);
+//     *tested_count = 0; // O número de permutações validadas com sucesso
 
-    do { // Loop de Inserção
-        memcpy(data_remove, data_base, sizeof(int) * N);
+//     do { // Loop de Inserção
+//         memcpy(data_remove, data_base, sizeof(int) * N);
 
-        do { // Loop de Remoção
-            BST *T = bst_alloc();
-            if (!T) {
-                status = 2; // Falhou ao alocar a árvore
-                goto cleanup;
-            }
+//         do { // Loop de Remoção
+//             BST *T = bst_alloc();
+//             if (!T) {
+//                 status = 2; // Falhou ao alocar a árvore
+//                 goto cleanup;
+//             }
 
-            // Teste de Inserções
-            for (int i = 0; i < N; i++) {
-                Node *nd = node_alloc(data_insert[i]);
-                avl_insert(T, nd);
+//             // Teste de Inserções
+//             for (int i = 0; i < N; i++) {
+//                 Node *nd = node_alloc(data_insert[i]);
+//                 avl_insert(T, nd);
 
-                if (!bst_check(T->root, data_insert, i + 1)) {
-                    bst_free(T);
-                    status = 3; // Dados inconsistentes
-                    goto cleanup;
-                }
+//                 if (!bst_check(T->root, data_insert, i + 1)) {
+//                     bst_free(T);
+//                     status = 3; // Dados inconsistentes
+//                     goto cleanup;
+//                 }
                 
-                if (!valid_avl(T->root)) {
-                    bst_free(T);
-                    status = 4; // Estrutura AVL inválida
-                    goto cleanup;
-                }
-            }
+//                 if (!valid_avl(T->root)) {
+//                     bst_free(T);
+//                     status = 4; // Estrutura AVL inválida
+//                     goto cleanup;
+//                 }
+//             }
             
-            int asize = N;
-            memcpy(arr, data_insert, sizeof(int) * asize);
+//             int asize = N;
+//             memcpy(arr, data_insert, sizeof(int) * asize);
             
-            // Teste de Remoções
-            for (int i = 0; i < N; i++) {
-                avl_delete(T, bst_search(T->root, data_remove[i]));
-                asize = arr_remove(arr, asize, data_remove[i]);
+//             // Teste de Remoções
+//             for (int i = 0; i < N; i++) {
+//                 avl_delete(T, bst_search(T->root, data_remove[i]));
+//                 asize = arr_remove(arr, asize, data_remove[i]);
                 
-                if (!bst_check(T->root, arr, asize)) {
-                    bst_free(T);
-                    status = 5; // Dados inconsistentes
-                    goto cleanup;
-                }
+//                 if (!bst_check(T->root, arr, asize)) {
+//                     bst_free(T);
+//                     status = 5; // Dados inconsistentes
+//                     goto cleanup;
+//                 }
                 
-                if (!valid_avl(T->root)) {
-                    bst_free(T);
-                    status = 6; // Estrutura AVL inválida
-                    goto cleanup;
-                }
-            }
+//                 if (!valid_avl(T->root)) {
+//                     bst_free(T);
+//                     status = 6; // Estrutura AVL inválida
+//                     goto cleanup;
+//                 }
+//             }
 
-            bst_free(T);
-            (*tested_count)++;
+//             bst_free(T);
+//             (*tested_count)++;
 
-        } while (perm_next(data_remove, N));
-    } while (perm_next(data_insert, N));
+//         } while (perm_next(data_remove, N));
+//     } while (perm_next(data_insert, N));
 
-cleanup:
-    // Esse bloco será executado tanto em sucesso quanto em falha
-    if (data_remove) free(data_remove);
-    if (data_insert) free(data_insert);
-    if (arr) free(arr);
+// cleanup:
+//     // Esse bloco será executado tanto em sucesso quanto em falha
+//     if (data_remove) free(data_remove);
+//     if (data_insert) free(data_insert);
+//     if (arr) free(arr);
     
-    return status;
-}
+//     return status;
+// }
 
 int main() {
     int DATA_BASE[] = {1, 2, 3, 4, 5};
@@ -1111,43 +970,43 @@ int main() {
 
     unsigned long long permutacoesTestadas = 0ULL;
 
-    printf("\nIniciando bateria de testes AVL...\n");
+    // printf("\nIniciando bateria de testes AVL...\n");
 
-    int status = brute_force_avl_validation(DATA_BASE, N, &permutacoesTestadas);
+    // int status = brute_force_avl_validation(DATA_BASE, N, &permutacoesTestadas);
 
-    if (status == 0) {
-        printf("\n%llu permutações distintas de inserções e remoções foram validadas com sucesso!\n", permutacoesTestadas);
-        return EXIT_SUCCESS;
-    } else {
-        printf("\nErro: Testes abortados prematuramente.\n");
-        printf("(Número de permutações bem sucedidas antes da falha: %llu)\n", permutacoesTestadas);
-        printf("Detalhamento do erro: ");
+    // if (status == 0) {
+    //     printf("\n%llu permutações distintas de inserções e remoções foram validadas com sucesso!\n", permutacoesTestadas);
+    //     return EXIT_SUCCESS;
+    // } else {
+    //     printf("\nErro: Testes abortados prematuramente.\n");
+    //     printf("(Número de permutações bem sucedidas antes da falha: %llu)\n", permutacoesTestadas);
+    //     printf("Detalhamento do erro: ");
 
-        switch (status) {
-            case 1:
-                printf("Código [1]: Falha de alocação de memória (arranjos auxiliares).\n");
-                break;
-            case 2:
-                printf("Código [2]: Falha de alocação de memória (\"bst_alloc\").\n");
-                break;
-            case 3:
-                printf("Código [3]: Inconsistência nos dados (\"bst_check\" falhou) após uma inserção.\n");
-                break;
-            case 4:
-                printf("Código [4]: Estrutura inválida (\"valid_avl\" falhou) após uma inserção.\n");
-                break;
-            case 5:
-                printf("Código [5]: Inconsistência nos dados (\"bst_check\" falhou) após uma remoção.\n");
-                break;
-            case 6:
-                printf("Código [6]: Estrutura inválida (\"valid_avl\" falhou) após uma remoção.\n");
-                break;
-            default:
-                printf("Código [?]: Erro desconhecido.\n");
-                break;
-        }
+    //     switch (status) {
+    //         case 1:
+    //             printf("Código [1]: Falha de alocação de memória (arranjos auxiliares).\n");
+    //             break;
+    //         case 2:
+    //             printf("Código [2]: Falha de alocação de memória (\"bst_alloc\").\n");
+    //             break;
+    //         case 3:
+    //             printf("Código [3]: Inconsistência nos dados (\"bst_check\" falhou) após uma inserção.\n");
+    //             break;
+    //         case 4:
+    //             printf("Código [4]: Estrutura inválida (\"valid_avl\" falhou) após uma inserção.\n");
+    //             break;
+    //         case 5:
+    //             printf("Código [5]: Inconsistência nos dados (\"bst_check\" falhou) após uma remoção.\n");
+    //             break;
+    //         case 6:
+    //             printf("Código [6]: Estrutura inválida (\"valid_avl\" falhou) após uma remoção.\n");
+    //             break;
+    //         default:
+    //             printf("Código [?]: Erro desconhecido.\n");
+    //             break;
+    //     }
 
-        printf("\n");
-        return EXIT_FAILURE;
-    }
+    //     printf("\n");
+    //     return EXIT_FAILURE;
+    // }
 }
