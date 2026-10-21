@@ -539,15 +539,14 @@ void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore r
     Node *y = z;                    //nó que vai sair da posição original
     Color y_original_color = y -> color;
     Node *x;                        //nó que ocupa a posição deixada por y
-    Node *x_parent;                 //pai de 'x' (vai substituir o "x.p")
 
     if(!z -> left){                 //caso z não tenha filho esquerdo, o filho direito sobe para o lugar de z
         x = z -> right;
-        x_parent = z -> parent;     //'x' fica no lugar de z, logo o pai dele é o pai de z
+        x -> parent = z -> parent;     //'x' fica no lugar de z, logo o pai dele é o pai de z
         rb_transplant(T, z, z -> right);
     } else if(!z -> right){         //caso z não possua filho direito
         x = z -> left;
-        x_parent = z -> parent;
+        x -> parent = z -> parent;
         rb_transplant(T, z, z -> left);
     } else{                             //caso z possua dois filhos, então o sucessor em ordem de z toma o lugar dele
         y = bst_minimum(z -> right);    //menor nó da subárvore direita (não tem filho esquerdo)
@@ -558,7 +557,7 @@ void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore r
                                         //então o pai de x é o próprio y (x.p = y do livro)
             x -> parent = y;            
         }else{                                  
-            x_parent = y -> parent;             //y está mais fundo na subárvore, primeiro se tira y do seu lugar e coloca x (filho direito de y) em seu lugar
+            x -> parent = y -> parent;             //y está mais fundo na subárvore, primeiro se tira y do seu lugar e coloca x (filho direito de y) em seu lugar
             rb_transplant(T, y, y -> right);
             y -> right = z -> right;            //depois se coloca a subárvore direita de z embaixo de y
             y -> right -> parent = y;
@@ -574,31 +573,30 @@ void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore r
     }
 }
 
-/* void rb_delete_fixup(BST *T, Node *x, Node *x_parent){
+/* void rb_delete_fixup(BST *T, Node *x){
     Node *w;
     while(x != T -> root && color_of(x) == BLACK){
-        if(x == x_parent -> left){
-            w = x_parent -> right;
+        if(x == x -> parent -> left){
+            w = x -> parent -> right;
             if(w -> color == RED){
                 w -> color = BLACK;
-                x_parent -> color = RED;
+                x -> parent -> color = RED;
                 left_rotate(T, x_parent);
-                w = x_parent -> right;
+                w = x -> parent -> right;
             }if(color_of(w -> left) == BLACK && color_of(w -> right) == BLACK){
                 w -> color = RED;
-                x = x_parent;
-                x_parent = x -> parent;
+                x = x -> parent;
             } else {
             if(color_of(w -> right) == BLACK){
                 w -> left -> color = BLACK;
                 w -> color = RED;
                 right_rotate(T, w);
-                w = x_parent -> right;
+                w = x -> parent -> right;
             }
-            w -> color = x_parent -> color;
-            x_parent -> color = BLACK;
+            w -> color = x -> parent -> color;
+            x -> parent -> color = BLACK;
             w -> right -> color = BLACK;
-            left_rotate(T, x_parent);
+            left_rotate(T, x -> parent);
             x = T -> root;
         }
     }
