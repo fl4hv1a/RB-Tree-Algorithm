@@ -573,19 +573,25 @@ void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore r
     }
 }
 
-/* void rb_delete_fixup(BST *T, Node *x){
-    Node *w;
-    while(x != T -> root && color_of(x) == BLACK){
-        if(x == x -> parent -> left){
-            w = x -> parent -> right;
-            if(w -> color == RED){
-                w -> color = BLACK;
-                x -> parent -> color = RED;
-                left_rotate(T, x_parent);
-                w = x -> parent -> right;
-            }if(color_of(w -> left) == BLACK && color_of(w -> right) == BLACK){
-                w -> color = RED;
-                x = x -> parent;
+void rb_delete_fixup(BST *T, Node *x){        //Corrige a árvore após remoção de um nó preto
+                                              //x é o nó que ocupou o lugar do nó que foi removido e possui e carrega o nó preto que saiu
+                                              //O laço se livra desse nó extra
+
+    Node *w;                                  // 'w' é irmão de 'x', quase tudo é decidido por sua e cor e seus filhos
+
+    while(x != T -> root && color_of(x) == BLACK){    //Repete quando 'x' for preto e não for a raiz
+        if(x == x -> parent -> left){                 //'x' é o filho a esquerda do pai
+            w = x -> parent -> right;                 //O irmão é filho direito do pai
+            
+            if(w -> color == RED){                    //Se o irmão for vermelho, o pai e os filhos dele são pretos
+                w -> color = BLACK;                   
+                x -> parent -> color = RED;           //Troca-se as cores
+                left_rotate(T, x -> parent);          //e rotaciona o pai para a esquerda
+                w = x -> parent -> right;             //atualiza w para ser preto
+                
+            }if(color_of(w -> left) == BLACK && color_of(w -> right) == BLACK){        //irmão preto com dois filhos pretos
+                w -> color = RED;                                                      //Muda a cor de 'w' para vermelho, o lado do irmão perde um preto
+                x = x -> parent;                                                       //
             } else {
             if(color_of(w -> right) == BLACK){
                 w -> left -> color = BLACK;
@@ -600,7 +606,7 @@ void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore r
             x = T -> root;
         }
     }
-}*/
+}
 
 /**
  * @brief Calcula recursivamente o tamanho (quantidade de nós) de uma subárvore BST.
