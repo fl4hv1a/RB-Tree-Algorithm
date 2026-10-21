@@ -418,26 +418,22 @@ void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore r
     Node *y = z;                    //nó que vai sair da posição original
     Color y_original_color = y->color;
     Node *x;                        //nó que ocupa a posição deixada por y
-    Node *x_parent;                 //pai de 'x' (vai substituir o "x.p")
 
-    if(!z->left){                 //caso z não tenha filho esquerdo, o filho direito sobe para o lugar de z
+    if (!z->left) {                 //caso z não tenha filho esquerdo, o filho direito sobe para o lugar de z
         x = z->right;
-        x_parent = z->parent;     //'x' fica no lugar de z, logo o pai dele é o pai de z
         rb_transplant(T, z, z->right);
-    } else if(!z->right){         //caso z não possua filho direito
+    } else if (!z->right) {         //caso z não possua filho direito
         x = z->left;
-        x_parent = z->parent;
         rb_transplant(T, z, z->left);
-    } else{                             //caso z possua dois filhos, então o sucessor em ordem de z toma o lugar dele
+    } else {                             //caso z possua dois filhos, então o sucessor em ordem de z toma o lugar dele
         y = bst_minimum(z->right);    //menor nó da subárvore direita (não tem filho esquerdo)
         y_original_color = y->color;  //o nó que sai é o y, se guarda a cor dele
         x = y->right;                 //o filho direto de y vai ocupar a posição que y deixa
 
-        if(y->parent == z){           //y já era filho direto de z, x continua abaixo de y que vai para a posição de z,
+        if (y->parent == z) {           //y já era filho direto de z, x continua abaixo de y que vai para a posição de z,
                                         //então o pai de x é o próprio y (x.p = y do livro)
             x->parent = y;            
-        }else{                                  
-            x_parent = y->parent;             //y está mais fundo na subárvore, primeiro se tira y do seu lugar e coloca x (filho direito de y) em seu lugar
+        } else {
             rb_transplant(T, y, y->right);
             y->right = z->right;            //depois se coloca a subárvore direita de z embaixo de y
             y->right->parent = y;
@@ -447,11 +443,15 @@ void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore r
         y->left->parent = y;
         y->color = z->color;        //y herda a cor de z, assim, na posição, a cor de z não mudou, apenas a cor original de y em sua posição antiga sendo deixada
     } 
+
     node_free(z);
-    if(y_original_color == BLACK){      //há problema se o nó que saiu era preto, se era vermelho a regra "vermelho não tem filho vermelho" 
+
+    if (y_original_color == BLACK) {      //há problema se o nó que saiu era preto, se era vermelho a regra "vermelho não tem filho vermelho" 
         rb_delete_fixup(T, x);          //continua valendo
     }
 }
+
+
 
 /* void rb_delete_fixup(BST *T, Node *x, Node *x_parent){
     Node *w;
