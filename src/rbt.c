@@ -416,36 +416,36 @@ Node *bst_delete(BST *T, Node *z) {
 void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore rubro-negra
                                     //T é o ponteiro para a árvore RB onde o nó vai ser removido, z é o ponteiro para o nó que será removido
     Node *y = z;                    //nó que vai sair da posição original
-    Color y_original_color = y -> color;
+    Color y_original_color = y->color;
     Node *x;                        //nó que ocupa a posição deixada por y
     Node *x_parent;                 //pai de 'x' (vai substituir o "x.p")
 
-    if(!z -> left){                 //caso z não tenha filho esquerdo, o filho direito sobe para o lugar de z
-        x = z -> right;
-        x_parent = z -> parent;     //'x' fica no lugar de z, logo o pai dele é o pai de z
-        rb_transplant(T, z, z -> right);
-    } else if(!z -> right){         //caso z não possua filho direito
-        x = z -> left;
-        x_parent = z -> parent;
-        rb_transplant(T, z, z -> left);
+    if(!z->left){                 //caso z não tenha filho esquerdo, o filho direito sobe para o lugar de z
+        x = z->right;
+        x_parent = z->parent;     //'x' fica no lugar de z, logo o pai dele é o pai de z
+        rb_transplant(T, z, z->right);
+    } else if(!z->right){         //caso z não possua filho direito
+        x = z->left;
+        x_parent = z->parent;
+        rb_transplant(T, z, z->left);
     } else{                             //caso z possua dois filhos, então o sucessor em ordem de z toma o lugar dele
-        y = bst_minimum(z -> right);    //menor nó da subárvore direita (não tem filho esquerdo)
-        y_original_color = y -> color;  //o nó que sai é o y, se guarda a cor dele
-        x = y -> right;                 //o filho direto de y vai ocupar a posição que y deixa
+        y = bst_minimum(z->right);    //menor nó da subárvore direita (não tem filho esquerdo)
+        y_original_color = y->color;  //o nó que sai é o y, se guarda a cor dele
+        x = y->right;                 //o filho direto de y vai ocupar a posição que y deixa
 
-        if(y -> parent == z){           //y já era filho direto de z, x continua abaixo de y que vai para a posição de z,
+        if(y->parent == z){           //y já era filho direto de z, x continua abaixo de y que vai para a posição de z,
                                         //então o pai de x é o próprio y (x.p = y do livro)
-            x -> parent = y;            
+            x->parent = y;            
         }else{                                  
-            x_parent = y -> parent;             //y está mais fundo na subárvore, primeiro se tira y do seu lugar e coloca x (filho direito de y) em seu lugar
-            rb_transplant(T, y, y -> right);
-            y -> right = z -> right;            //depois se coloca a subárvore direita de z embaixo de y
-            y -> right -> parent = y;
+            x_parent = y->parent;             //y está mais fundo na subárvore, primeiro se tira y do seu lugar e coloca x (filho direito de y) em seu lugar
+            rb_transplant(T, y, y->right);
+            y->right = z->right;            //depois se coloca a subárvore direita de z embaixo de y
+            y->right->parent = y;
         }
         rb_transplant(T, z, y);         //coloca y no lugar de z e liga a subárvore esquerda de z a ele
-        y -> left = z -> left;
-        y -> left -> parent = y;
-        y -> color = z -> color;        //y herda a cor de z, assim, na posição, a cor de z não mudou, apenas a cor original de y em sua posição antiga sendo deixada
+        y->left = z->left;
+        y->left->parent = y;
+        y->color = z->color;        //y herda a cor de z, assim, na posição, a cor de z não mudou, apenas a cor original de y em sua posição antiga sendo deixada
     } 
     node_free(z);
     if(y_original_color == BLACK){      //há problema se o nó que saiu era preto, se era vermelho a regra "vermelho não tem filho vermelho" 
@@ -455,30 +455,30 @@ void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore r
 
 /* void rb_delete_fixup(BST *T, Node *x, Node *x_parent){
     Node *w;
-    while(x != T -> root && color_of(x) == BLACK){
-        if(x == x_parent -> left){
-            w = x_parent -> right;
-            if(w -> color == RED){
-                w -> color = BLACK;
-                x_parent -> color = RED;
+    while(x != T->root && color_of(x) == BLACK){
+        if(x == x_parent->left){
+            w = x_parent->right;
+            if(w->color == RED){
+                w->color = BLACK;
+                x_parent->color = RED;
                 left_rotate(T, x_parent);
-                w = x_parent -> right;
-            }if(color_of(w -> left) == BLACK && color_of(w -> right) == BLACK){
-                w -> color = RED;
+                w = x_parent->right;
+            }if(color_of(w->left) == BLACK && color_of(w->right) == BLACK){
+                w->color = RED;
                 x = x_parent;
-                x_parent = x -> parent;
+                x_parent = x->parent;
             } else {
-            if(color_of(w -> right) == BLACK){
-                w -> left -> color = BLACK;
-                w -> color = RED;
+            if(color_of(w->right) == BLACK){
+                w->left->color = BLACK;
+                w->color = RED;
                 right_rotate(T, w);
-                w = x_parent -> right;
+                w = x_parent->right;
             }
-            w -> color = x_parent -> color;
-            x_parent -> color = BLACK;
-            w -> right -> color = BLACK;
+            w->color = x_parent->color;
+            x_parent->color = BLACK;
+            w->right->color = BLACK;
             left_rotate(T, x_parent);
-            x = T -> root;
+            x = T->root;
         }
     }
 }*/
@@ -633,7 +633,7 @@ bool bst_check(Node *nd, const int *const data, const int N) {
 /**
  * @brief Imprime uma representação textual da estrutura geometrica completa de uma subárvore BST deitada no terminal.
  * 
- * @details Utiliza um percurso invertido (Direita -> Raiz -> Esquerda) e uma identação progressiva
+ * @details Utiliza um percurso invertido (Direita->Raiz->Esquerda) e uma identação progressiva
  *          para desenhar a árvore "deitada". A raiz aparece na margem esquerda do terminal,
  *          a subárvore direita cresce para a parte de cima e a esquerda para a parte de baixo.
  * 
