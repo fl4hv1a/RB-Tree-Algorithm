@@ -900,31 +900,21 @@ bool valid_bst(Node *n, Node *min_node, Node *max_node) {
 /**
  * @brief Computa e valida recursivamente a Altura Negra de uma subárvore RB.
  * 
- * @details Percorre todas as ramificações da subárvore `n` para verificar a Propriedade 5
- *          (todos os caminhos simples de um nó até as folhas descendentes `NULL` devem conter
- *          o mesmo número de nós pretos). Nesta implementação, contabiliza-se a quantidade
- *          total de nós pretos no caminho (incluindo as folhas `NULL` como pretas).
- * 
  * @param[in] n Ponteiro para o nó raiz da subárvore a ser avaliada.
  * 
- * @return A quantidade de nós pretos nos caminhos até as folhas, ou `-1` em caso de violação.
+ * @return A quantidade de nós pretos no maior caminho até um nó folha.
  * 
  * @retval - Um inteiro `>= 1`: Se as alturas negras das subárvores esquerda e direita forem idênticas;
  * @retval - `-1`: Caso haja discrepância entre a quantidade de nós pretos na esquerda e na direita.
  */
 int compute_black_height(Node *n) {
-    if (!n) return 1; // Passo base: Pela Propriedade 3, toda folha nula é preta
+    if (!n) return 1; // Passo base
 
     int left_bh = compute_black_height(n->left);
     int right_bh = compute_black_height(n->right);
 
-    // Se alguma subárvore já for inválida (-1) ou tiverem alturas negras diferentes, propaga o erro (-1)
-    if (left_bh == -1 || right_bh == -1 || left_bh != right_bh) {
-        return -1;
-    }
-
     // Soma 1 se o nó atual for preto, ou 0 se for vermelho
-    return left_bh + ((n->color == BLACK) ? 1 : 0);
+    return ((n->color == BLACK) ? 1 : 0) + max(left_bh, right_bh);
 }
 
 /**
@@ -933,6 +923,7 @@ int compute_black_height(Node *n) {
  * @details Verifica para cada nó da subárvore:
  *          - Propriedade 1: Todo nó é vermelho (`RED`) ou preto (`BLACK`);
  *          - Propriedade 4: Se um nó é vermelho, então ambos os seus filhos são pretos;
+ *          - Propriedade 5: Todos os caminhos até folhas devem ter o mesmo número de nós pretos;
  *          - Integridade estrutural: Os ponteiros `parent` dos filhos apontam corretamente para o nó atual.
  * 
  * @param[in] n Ponteiro para o nó raiz da subárvore a ser verificada.
@@ -962,6 +953,11 @@ bool valid_rb_node(Node *n) {
         return false;
     }
     if (n->right && n->right->parent != n) {
+        return false;
+    }
+
+    // Propriedade 5: Todos os caminhos até folhas devem ter o mesmo número de nós pretos
+    if (compute_black_height(n->left) != compute_black_height(n->right)) {
         return false;
     }
 
