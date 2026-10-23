@@ -898,50 +898,131 @@ bool valid_bst(Node *n, Node *min_node, Node *max_node) {
 }
 
 /**
- * @brief Valida estruturalmente se uma subárvore obedece a todas as
- *        propriedades de uma árvore AVL.
+ * @brief Computa e valida recursivamente a Altura Negra de uma subárvore RB.
  * 
- * @param[in] n Ponteiro para o nó raiz da subárvore a ser validada.
+ * @details Percorre todas as ramificações da subárvore `n` para verificar a Propriedade 5
+ *          (todos os caminhos simples de um nó até as folhas descendentes `NULL` devem conter
+ *          o mesmo número de nós pretos). Nesta implementação, contabiliza-se a quantidade
+ *          total de nós pretos no caminho (incluindo as folhas `NULL` como pretas).
  * 
- * @return Resultado da validação da subárvore.
+ * @param[in] n Ponteiro para o nó raiz da subárvore a ser avaliada.
  * 
- * @retval - `true`: Se for uma AVL perfeitamente válida;
- * @retval - `false`: Caso alguma propriedade seja violada.
+ * @return A quantidade de nós pretos nos caminhos até as folhas, ou `-1` em caso de violação.
+ * 
+ * @retval - Um inteiro `>= 1`: Se as alturas negras das subárvores esquerda e direita forem idênticas;
+ * @retval - `-1`: Caso haja discrepância entre a quantidade de nós pretos na esquerda e na direita.
  */
-// bool valid_avl(Node *n) {
-//     if (!n) return true; // Uma subárvore vazia é uma AVL válida
+int compute_black_height(Node *n) {
+    if (!n) return 1; // Passo base: Pela Propriedade 3, toda folha nula é preta
 
-//     // Valida se a altura armazenada no nó atual condiz com a sua altura real
-//     if (n->height != compute_real_height(n)) return false;
+    int left_bh = compute_black_height(n->left);
+    int right_bh = compute_black_height(n->right);
 
-//     // Valida se o balanceamento retornado no nó atual condiz com o seu balanceamento real
-//     int balance = get_balance(n);
-//     if (balance != compute_real_height(n->left) - compute_real_height(n->right)) {
-//         return false;
-//     }
+    // Se alguma subárvore já for inválida (-1) ou tiverem alturas negras diferentes, propaga o erro (-1)
+    if (left_bh == -1 || right_bh == -1 || left_bh != right_bh) {
+        return -1;
+    }
 
-//     // Valida o fator de balanceamento
-//     if (balance < -ALLOWED_IMBALANCE || balance > ALLOWED_IMBALANCE) {
-//         return false; // O nó está desbalanceado, então não é uma AVL válida
-//     }
-
-//     // Valida se os ponteiros estão corretamente bidirecionais
-//     if (n->left && n->left->parent != n) {
-//         return false;
-//     }
-//     if (n->right && n->right->parent != n) {
-//         return false;
-//     }
-
-//     // Valida a propriedade BST (menores à esquerda e maiores à direita)
-//     if (!valid_bst(n, NULL, NULL)) return false;
-
-//     // Continua a validação descendo recursivamente para todos os nós descendentes
-//     return valid_avl(n->left) && valid_avl(n->right);
-// }
+    // Soma 1 se o nó atual for preto, ou 0 se for vermelho
+    return left_bh + ((n->color == BLACK) ? 1 : 0);
+}
 
 /**
- * @brief Valida exaustivamente uma estrutura AVL testando todas as permutações 
+ * @brief Valida recursivamente as propriedades locais dos nós de uma subárvore RB.
+ * 
+ * @details Verifica para cada nó da subárvore:
+ *          - Propriedade 1: Todo nó é vermelho (`RED`) ou preto (`BLACK`);
+ *          - Propriedade 4: Se um nó é vermelho, então ambos os seus filhos são pretos;
+ *          - Integridade estrutural: Os ponteiros `parent` dos filhos apontam corretamente para o nó atual.
+ * 
+ * @param[in] n Ponteiro para o nó raiz da subárvore a ser verificada.
+ * 
+ * @return Resultado da validação local da subárvore.
+ * 
+ * @retval - `true`: Se todos os nós da subárvore respeitarem as propriedades locais;
+ * @retval - `false`: Caso alguma violação de cor ou de ponteiro pai seja encontrada.
+ */
+bool valid_rb_node(Node *n) {
+    if (!n) return true; // Uma subárvore vazia é válida por definição
+
+    // Propriedade 1: O nó deve ter uma cor válida (RED ou BLACK)
+    if (n->color != RED && n->color != BLACK) {
+        return false;
+    }
+
+    // Propriedade 4: Um nó vermelho não pode ter filhos vermelhos (ambos devem ser pretos)
+    if (n->color == RED) {
+        if (color_of(n->left) == RED || color_of(n->right) == RED) {
+            return false;
+        }
+    }
+
+    // Valida se os ponteiros pai-filho estão corretamente bidirecionais
+    if (n->left && n->left->parent != n) {
+        return false;
+    }
+    if (n->right && n->right->parent != n) {
+        return false;
+    }
+
+    // Continua a validação descendo recursivamente para todos os nós descendentes
+    return valid_rb_node(n->left) && valid_rb_node(n->right);
+}
+
+/**
+ * @brief Valida estruturalmente se uma árvore obedece a todas as propriedades
+ *        de uma Árvore Vermelho-Preto (RB).
+ * 
+ * @details Realiza a checagem completa das 5 propriedades RB definidas no Cormen,
+ *          além das invariantes de árvore binária de busca (BST):
+ *          1. Todo nó é vermelho ou preto (`valid_rb_node`);
+ *          2. A raiz é preta (`color_of(root) == BLACK`) e seu pai é `NULL`;
+ *          3. Toda folha (`NULL`) é preta (`color_of(NULL) == BLACK`);
+ *          4. Se um nó é vermelho, então ambos os seus filhos são pretos (`valid_rb_node`);
+ *          5. Para cada nó, todos os caminhos simples dele até folhas descendentes contêm
+ *             o mesmo número de nós pretos (`compute_black_height(root) != -1`);
+ *          6. A árvore respeita a ordenação estrita de chaves de uma BST (`valid_bst`).
+ * 
+ * @param[in] root Ponteiro para o nó raiz da árvore RB a ser validada.
+ * 
+ * @return Resultado da validação completa da árvore.
+ * 
+ * @retval - `true`: Se for uma árvore Vermelho-Preto perfeitamente válida;
+ * @retval - `false`: Caso qualquer propriedade RB ou BST seja violada.
+ */
+bool valid_rb(Node *root) {
+    if (!root) return true; // Uma árvore vazia é uma RB válida
+
+    // O pai da raiz obrigatoriamente deve ser NULL
+    if (root->parent != NULL) {
+        return false;
+    }
+
+    // Propriedade 2: A raiz deve ser preta
+    if (color_of(root) != BLACK) {
+        return false;
+    }
+
+    // Valida a propriedade BST (menores à esquerda e maiores à direita)
+    if (!valid_bst(root, NULL, NULL)) {
+        return false;
+    }
+
+    // Valida Propriedades 1, 4 e ponteiros bidirecionais em todos os nós
+    if (!valid_rb_node(root)) {
+        return false;
+    }
+
+    // Propriedade 5: Todos os caminhos devem ter a mesma altura negra
+    if (compute_black_height(root) == -1) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * @brief Valida exaustivamente uma estrutura RB testando todas as permutações 
  *        possíveis de inserções e remoções para um determinado conjunto de entrada.
  * 
  * @param[in] data_base Arranjo contendo o conjunto de chaves para os testes (deve estar ordenado!).
@@ -954,88 +1035,88 @@ bool valid_bst(Node *n, Node *min_node, Node *max_node) {
  * @retval - `1`: Falha na alocação de memória para os arranjos auxiliares na heap;
  * @retval - `2`: Falha na alocação de memória para a raiz da árvore (`bst_alloc`);
  * @retval - `3`: Inconsistência de dados - `bst_check` falhou após uma INSERÇÃO;
- * @retval - `4`: Estrutura inválida - `valid_avl` falhou após uma INSERÇÃO;
+ * @retval - `4`: Estrutura inválida - `valid_rb` falhou após uma INSERÇÃO;
  * @retval - `5`: Inconsistência de dados - `bst_check` falhou após uma REMOÇÃO;
- * @retval - `6`: Estrutura inválida - `valid_avl` falhou após uma REMOÇÃO.
+ * @retval - `6`: Estrutura inválida - `valid_rb` falhou após uma REMOÇÃO.
  */
-// int brute_force_avl_validation(const int *data_base, const int N, unsigned long long *tested_count) {
-//     int status = 0; // Inicializado com "Sucesso"
+int brute_force_rb_validation(const int *data_base, const int N, unsigned long long *tested_count) {
+    int status = 0; // Inicializado com "Sucesso"
 
-//     int *data_insert = (int *) malloc(sizeof(int) * N);
-//     int *data_remove = (int *) malloc(sizeof(int) * N);
-//     int *arr = (int *) malloc(sizeof(int) * N);
+    int *data_insert = (int *) malloc(sizeof(int) * N);
+    int *data_remove = (int *) malloc(sizeof(int) * N);
+    int *arr = (int *) malloc(sizeof(int) * N);
 
-//     if (!data_insert || !data_remove || !arr) {
-//         status = 1;
-//         goto cleanup;
-//     }
+    if (!data_insert || !data_remove || !arr) {
+        status = 1;
+        goto cleanup;
+    }
 
-//     memcpy(data_insert, data_base, sizeof(int) * N);
-//     *tested_count = 0; // O número de permutações validadas com sucesso
+    memcpy(data_insert, data_base, sizeof(int) * N);
+    *tested_count = 0; // O número de permutações validadas com sucesso
 
-//     do { // Loop de Inserção
-//         memcpy(data_remove, data_base, sizeof(int) * N);
+    do { // Loop de Inserção
+        memcpy(data_remove, data_base, sizeof(int) * N);
 
-//         do { // Loop de Remoção
-//             BST *T = bst_alloc();
-//             if (!T) {
-//                 status = 2; // Falhou ao alocar a árvore
-//                 goto cleanup;
-//             }
+        do { // Loop de Remoção
+            BST *T = bst_alloc();
+            if (!T) {
+                status = 2; // Falhou ao alocar a árvore
+                goto cleanup;
+            }
 
-//             // Teste de Inserções
-//             for (int i = 0; i < N; i++) {
-//                 Node *nd = node_alloc(data_insert[i]);
-//                 avl_insert(T, nd);
+            // Teste de Inserções
+            for (int i = 0; i < N; i++) {
+                Node *nd = node_alloc(data_insert[i]);
+                rb_insert(T, nd);
 
-//                 if (!bst_check(T->root, data_insert, i + 1)) {
-//                     bst_free(T);
-//                     status = 3; // Dados inconsistentes
-//                     goto cleanup;
-//                 }
+                if (!bst_check(T->root, data_insert, i + 1)) {
+                    bst_free(T);
+                    status = 3; // Dados inconsistentes
+                    goto cleanup;
+                }
                 
-//                 if (!valid_avl(T->root)) {
-//                     bst_free(T);
-//                     status = 4; // Estrutura AVL inválida
-//                     goto cleanup;
-//                 }
-//             }
+                if (!valid_rb(T->root)) {
+                    bst_free(T);
+                    status = 4; // Estrutura RB inválida
+                    goto cleanup;
+                }
+            }
             
-//             int asize = N;
-//             memcpy(arr, data_insert, sizeof(int) * asize);
+            int asize = N;
+            memcpy(arr, data_insert, sizeof(int) * asize);
             
-//             // Teste de Remoções
-//             for (int i = 0; i < N; i++) {
-//                 avl_delete(T, bst_search(T->root, data_remove[i]));
-//                 asize = arr_remove(arr, asize, data_remove[i]);
+            // Teste de Remoções
+            for (int i = 0; i < N; i++) {
+                rb_delete(T, bst_search(T->root, data_remove[i]));
+                asize = arr_remove(arr, asize, data_remove[i]);
                 
-//                 if (!bst_check(T->root, arr, asize)) {
-//                     bst_free(T);
-//                     status = 5; // Dados inconsistentes
-//                     goto cleanup;
-//                 }
+                if (!bst_check(T->root, arr, asize)) {
+                    bst_free(T);
+                    status = 5; // Dados inconsistentes
+                    goto cleanup;
+                }
                 
-//                 if (!valid_avl(T->root)) {
-//                     bst_free(T);
-//                     status = 6; // Estrutura AVL inválida
-//                     goto cleanup;
-//                 }
-//             }
+                if (!valid_rb(T->root)) {
+                    bst_free(T);
+                    status = 6; // Estrutura RB inválida
+                    goto cleanup;
+                }
+            }
 
-//             bst_free(T);
-//             (*tested_count)++;
+            bst_free(T);
+            (*tested_count)++;
 
-//         } while (perm_next(data_remove, N));
-//     } while (perm_next(data_insert, N));
+        } while (perm_next(data_remove, N));
+    } while (perm_next(data_insert, N));
 
-// cleanup:
-//     // Esse bloco será executado tanto em sucesso quanto em falha
-//     if (data_remove) free(data_remove);
-//     if (data_insert) free(data_insert);
-//     if (arr) free(arr);
+cleanup:
+    // Esse bloco será executado tanto em sucesso quanto em falha
+    if (data_remove) free(data_remove);
+    if (data_insert) free(data_insert);
+    if (arr) free(arr);
     
-//     return status;
-// }
+    return status;
+}
 
 int main() {
     int DATA_BASE[] = {1, 2, 3, 4, 5};
@@ -1046,43 +1127,43 @@ int main() {
 
     unsigned long long permutacoesTestadas = 0ULL;
 
-    // printf("\nIniciando bateria de testes AVL...\n");
+    printf("\nIniciando bateria de testes RB...\n");
 
-    // int status = brute_force_avl_validation(DATA_BASE, N, &permutacoesTestadas);
+    int status = brute_force_rb_validation(DATA_BASE, N, &permutacoesTestadas);
 
-    // if (status == 0) {
-    //     printf("\n%llu permutações distintas de inserções e remoções foram validadas com sucesso!\n", permutacoesTestadas);
-    //     return EXIT_SUCCESS;
-    // } else {
-    //     printf("\nErro: Testes abortados prematuramente.\n");
-    //     printf("(Número de permutações bem sucedidas antes da falha: %llu)\n", permutacoesTestadas);
-    //     printf("Detalhamento do erro: ");
+    if (status == 0) {
+        printf("\n%llu permutações distintas de inserções e remoções foram validadas com sucesso!\n", permutacoesTestadas);
+        return EXIT_SUCCESS;
+    } else {
+        printf("\nErro: Testes abortados prematuramente.\n");
+        printf("(Número de permutações bem sucedidas antes da falha: %llu)\n", permutacoesTestadas);
+        printf("Detalhamento do erro: ");
 
-    //     switch (status) {
-    //         case 1:
-    //             printf("Código [1]: Falha de alocação de memória (arranjos auxiliares).\n");
-    //             break;
-    //         case 2:
-    //             printf("Código [2]: Falha de alocação de memória (\"bst_alloc\").\n");
-    //             break;
-    //         case 3:
-    //             printf("Código [3]: Inconsistência nos dados (\"bst_check\" falhou) após uma inserção.\n");
-    //             break;
-    //         case 4:
-    //             printf("Código [4]: Estrutura inválida (\"valid_avl\" falhou) após uma inserção.\n");
-    //             break;
-    //         case 5:
-    //             printf("Código [5]: Inconsistência nos dados (\"bst_check\" falhou) após uma remoção.\n");
-    //             break;
-    //         case 6:
-    //             printf("Código [6]: Estrutura inválida (\"valid_avl\" falhou) após uma remoção.\n");
-    //             break;
-    //         default:
-    //             printf("Código [?]: Erro desconhecido.\n");
-    //             break;
-    //     }
+        switch (status) {
+            case 1:
+                printf("Código [1]: Falha de alocação de memória (arranjos auxiliares).\n");
+                break;
+            case 2:
+                printf("Código [2]: Falha de alocação de memória (\"bst_alloc\").\n");
+                break;
+            case 3:
+                printf("Código [3]: Inconsistência nos dados (\"bst_check\" falhou) após uma inserção.\n");
+                break;
+            case 4:
+                printf("Código [4]: Estrutura inválida (\"valid_rb\" falhou) após uma inserção.\n");
+                break;
+            case 5:
+                printf("Código [5]: Inconsistência nos dados (\"bst_check\" falhou) após uma remoção.\n");
+                break;
+            case 6:
+                printf("Código [6]: Estrutura inválida (\"valid_rb\" falhou) após uma remoção.\n");
+                break;
+            default:
+                printf("Código [?]: Erro desconhecido.\n");
+                break;
+        }
 
-    //     printf("\n");
-    //     return EXIT_FAILURE;
-    // }
+        printf("\n");
+        return EXIT_FAILURE;
+    }
 }
