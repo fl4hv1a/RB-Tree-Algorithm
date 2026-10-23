@@ -25,6 +25,17 @@ typedef struct BinarySearchTree {
 } BST;
 
 /**
+ * @brief Retorna a cor de um nó de uma árvore RB.
+ * 
+ * @param[in] n Ponteiro para o nó que se deseja saber a cor.
+ * 
+ * @returns A cor do nó `n`, se `n` for não-nulo, ou `BLACK` caso `n` seja nulo.
+ */
+Color color_of(Node *n) {
+    return n ? n->color : BLACK;
+}
+
+/**
  * @brief Encontra o maior entre dois inteiros.
  * 
  * @param[in] a O primeiro inteiro a ser comparado.
@@ -253,13 +264,14 @@ void bst_insert(BST *T, Node *z) {
 }
 
 void rb_insert_fixup(BST *T, Node *z) {
-    while (z->parent->color == RED) {
+    while (color_of(z->parent) == RED) {
         if (z->parent == z->parent->parent->left) { // Testa se o pai de `z` é um filho à esquerda
             Node *y = z->parent->parent->right; // O tio de `z`
 
-            if (y->color == RED) { // O tio é vermelho
+            if (color_of(y) == RED) { // O tio é vermelho
                 z->parent->color = BLACK;
                 y->color = BLACK;
+                z->parent->parent->color = RED;
                 z = z->parent->parent;
             } else { // O tio é preto
                 if (z == z->parent->right) {
@@ -268,10 +280,25 @@ void rb_insert_fixup(BST *T, Node *z) {
                 }
                 z->parent->color = BLACK;
                 z->parent->parent->color = RED;
-                right_rotate(T, z);
+                right_rotate(T, z->parent->parent);
             }
         } else {
-            // Igual ao if da linha 364 trocando "right" e "left"
+            Node *y = z->parent->parent->left; // O tio de `z`
+
+            if (color_of(y) == RED) { // O tio é vermelho
+                z->parent->color = BLACK;
+                y->color = BLACK;
+                z->parent->parent->color = RED;
+                z = z->parent->parent;
+            } else { // O tio é preto
+                if (z == z->parent->left) {
+                    z = z->parent;
+                    right_rotate(T, z);
+                }
+                z->parent->color = BLACK;
+                z->parent->parent->color = RED;
+                left_rotate(T, z->parent->parent);
+            }
         }
     }
 
@@ -279,33 +306,9 @@ void rb_insert_fixup(BST *T, Node *z) {
 }
 
 void rb_insert(BST *T, Node *z) {
-    Node *y; // pai de x
-    Node *x; // posição atual que no caso será a raiz
+    bst_insert(T, z);        // Faz a inserção padrão de BST
 
-    y = NULL; 
-    x = T->root;
-
-    while(x != NULL) { // enquanto x não for nulo, desce árvore
-        y = x; 
-
-        if (z->key < x->key) { // se a chave for menor que x, desce para o nó à esquerda, do contrário desce pela direita
-            x = x->left;
-        } else x = x->right;
-    }
-    
-    z->parent = y; // seu pai recebe o nó y
-    
-    if(y == NULL) { // se o pai não existir então é a raiz
-        T->root = z;
-    } else if(z->key < y->key) { // se z for menor que y, é o filho esquerdo, do contrário é o filho direito
-        y->left = z;
-    } else y->right = z;
-
-    z->left = NULL;
-    z->right = NULL;
-    z->color = RED; // seguindo a definição de árvore vermelho e preto o nó inserido fica vermelho
-
-    rb_insert_fixup(T,z); // chama o fixup para corrigir a árvore se não mais seguir todas as regras
+    rb_insert_fixup(T, z);   // Corrige possíveis violações RB
 }
 
 /**
@@ -413,6 +416,12 @@ Node *bst_delete(BST *T, Node *z) {
     return fix_node_pin;
 }
 
+/**
+ * @brief Remove e desaloca um nó de uma árvore RB.
+ * 
+ * @param[in] T Ponteiro para a árvore RB onde o nó será removido.
+ * @param[in] z Ponteiro para o nó que será removido.
+ */
 void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore rubro-negra
                                     //T é o ponteiro para a árvore RB onde o nó vai ser removido, z é o ponteiro para o nó que será removido
     Node *y = z;                    //nó que vai sair da posição original
@@ -421,10 +430,10 @@ void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore r
 
     if (!z->left) {                 //caso z não tenha filho esquerdo, o filho direito sobe para o lugar de z
         x = z->right;
-        rb_transplant(T, z, z->right);
+        transplant(T, z, z->right);
     } else if (!z->right) {         //caso z não possua filho direito
         x = z->left;
-        rb_transplant(T, z, z->left);
+        transplant(T, z, z->left);
     } else {                             //caso z possua dois filhos, então o sucessor em ordem de z toma o lugar dele
         y = bst_minimum(z->right);    //menor nó da subárvore direita (não tem filho esquerdo)
         y_original_color = y->color;  //o nó que sai é o y, se guarda a cor dele
@@ -434,11 +443,11 @@ void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore r
                                         //então o pai de x é o próprio y (x.p = y do livro)
             x->parent = y;            
         } else {
-            rb_transplant(T, y, y->right);
+            transplant(T, y, y->right);
             y->right = z->right;            //depois se coloca a subárvore direita de z embaixo de y
             y->right->parent = y;
         }
-        rb_transplant(T, z, y);         //coloca y no lugar de z e liga a subárvore esquerda de z a ele
+        transplant(T, z, y);         //coloca y no lugar de z e liga a subárvore esquerda de z a ele
         y->left = z->left;
         y->left->parent = y;
         y->color = z->color;        //y herda a cor de z, assim, na posição, a cor de z não mudou, apenas a cor original de y em sua posição antiga sendo deixada
