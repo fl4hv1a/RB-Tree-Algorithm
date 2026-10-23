@@ -716,7 +716,7 @@ bool bst_check(Node *nd, const int *const data, const int N) {
 }
 
 /**
- * @brief Imprime uma representação textual da estrutura geometrica completa de uma subárvore BST deitada no terminal.
+ * @brief Imprime uma representação textual da estrutura geometrica completa de uma subárvore RB deitada no terminal.
  * 
  * @details Utiliza um percurso invertido (Direita->Raiz->Esquerda) e uma identação progressiva
  *          para desenhar a árvore "deitada". A raiz aparece na margem esquerda do terminal,
@@ -1070,10 +1070,19 @@ int brute_force_rb_validation(const int *data_base, const int N, unsigned long l
                 goto cleanup;
             }
 
+            #ifdef SHOW_STEPS
+                printf("\n----------- teste nº %llu -----------\n\n", (*tested_count) + 1);
+            #endif
+
             // Teste de Inserções
             for (int i = 0; i < N; i++) {
                 Node *nd = node_alloc(data_insert[i]);
                 rb_insert(T, nd);
+
+                #ifdef SHOW_STEPS
+                    bst_print(T);
+                    bst_printTree(T);
+                #endif
 
                 if (!bst_check(T->root, data_insert, i + 1)) {
                     bst_free(T);
@@ -1087,6 +1096,11 @@ int brute_force_rb_validation(const int *data_base, const int N, unsigned long l
                     goto cleanup;
                 }
             }
+
+            #ifdef SHOW_STEPS
+                printf("Árvore após todas as INSERÇÕES:\n");
+                bst_printTree(T);
+            #endif
             
             int asize = N;
             memcpy(arr, data_insert, sizeof(int) * asize);
@@ -1094,6 +1108,10 @@ int brute_force_rb_validation(const int *data_base, const int N, unsigned long l
             // Teste de Remoções
             for (int i = 0; i < N; i++) {
                 rb_delete(T, bst_search(T->root, data_remove[i]));
+                #ifdef SHOW_STEPS
+                    bst_print(T);
+                    bst_printTree(T);
+                #endif
                 asize = arr_remove(arr, asize, data_remove[i]);
                 
                 if (!bst_check(T->root, arr, asize)) {
@@ -1108,6 +1126,11 @@ int brute_force_rb_validation(const int *data_base, const int N, unsigned long l
                     goto cleanup;
                 }
             }
+
+            #ifdef SHOW_STEPS
+                printf("Árvore após todas as REMOÇÕES:\n");
+                bst_printTree(T);
+            #endif
 
             bst_free(T);
             (*tested_count)++;
