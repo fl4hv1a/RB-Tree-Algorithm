@@ -97,10 +97,6 @@ void right_rotate(BST *T, Node *n) {
     if (RleftN) {
         RleftN->parent = n;
     }
-
-    // Atualiza as alturas
-    update_height(n);
-    update_height(leftN);
 }
 
 /**
@@ -127,10 +123,6 @@ void left_rotate(BST *T, Node *n) {
     if (LrightN) {
         LrightN->parent = n;
     }
-
-    // Atualiza as alturas
-    update_height(n);
-    update_height(rightN);
 }
 
 /**
@@ -416,17 +408,82 @@ Node *bst_delete(BST *T, Node *z) {
     return fix_node_pin;
 }
 
+void rb_delete_fixup(BST *T, Node *x, Node *x_parent) {
+    while (x != T->root && color_of(x) == BLACK) {
+        Node *w;
+        if (x == x_parent->left) { // `x` é filho à esquerda
+            w = x_parent->right;
+
+            if (color_of(w) == RED) { // Caso 1: O irmão `w` de `x` é vermelho
+                w->color = BLACK;
+                x_parent->color = RED;
+                left_rotate(T, x_parent);
+                w = x_parent->right;
+            }
+            if (color_of(w->left) == BLACK && color_of(w->right) == BLACK) { // Caso 2: Os dois filhos de `w` são pretos
+                w->color = RED;
+                x = x_parent;
+                x_parent = x->parent;
+            } else {
+                if (color_of(w->right) == BLACK) { // Caso 3: O filho direito de `w` é preto (e o esquerdo é vermelho)
+                    w->left->color = BLACK;
+                    w->color = RED;
+                    right_rotate(T, w);
+                    w = x_parent->right;
+                }
+                // Caso 4: O filho direito de `w` é vermelho
+                w->color = x_parent->color;
+                x_parent->color = BLACK;
+                w->right->color = BLACK;
+                left_rotate(T, x_parent);
+                x = T->root;
+            }
+        } else { // Simétrico: `x` é filho à direita
+            w = x_parent->left;
+
+            if (color_of(w) == RED) { // Caso 1
+                w->color = BLACK;
+                x_parent->color = RED;
+                right_rotate(T, x_parent);
+                w = x_parent->left;
+            }
+            if (color_of(w->right) == BLACK && color_of(w->left) == BLACK) { // Caso 2
+                w->color = RED;
+                x = x_parent;
+                x_parent = x->parent;
+            } else {
+                if (color_of(w->left) == BLACK) { // Caso 3
+                    w->right->color = BLACK;
+                    w->color = RED;
+                    left_rotate(T, w);
+                    w = x_parent->left;
+                }
+                // Caso 4
+                w->color = x_parent->color;
+                x_parent->color = BLACK;
+                w->left->color = BLACK;
+                right_rotate(T, x_parent);
+                x = T->root;
+            }
+        }
+    }
+
+    if (x) {
+        x->color = BLACK;
+    }
+}
+
 /**
  * @brief Remove e desaloca um nó de uma árvore RB.
  * 
  * @param[in] T Ponteiro para a árvore RB onde o nó será removido.
  * @param[in] z Ponteiro para o nó que será removido.
  */
-void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore rubro-negra
-                                    //T é o ponteiro para a árvore RB onde o nó vai ser removido, z é o ponteiro para o nó que será removido
+void rb_delete(BST *T, Node *z) {
     Node *y = z;                    //nó que vai sair da posição original
     Color y_original_color = y->color;
     Node *x;                        //nó que ocupa a posição deixada por y
+    Node *x_parent = z->parent;     //rastreia o pai de x (necessário caso x seja NULL)
 
     if (!z->left) {                 //caso z não tenha filho esquerdo, o filho direito sobe para o lugar de z
         x = z->right;
@@ -441,8 +498,9 @@ void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore r
 
         if (y->parent == z) {           //y já era filho direto de z, x continua abaixo de y que vai para a posição de z,
                                         //então o pai de x é o próprio y (x.p = y do livro)
-            x->parent = y;            
+            x_parent = y;
         } else {
+            x_parent = y->parent;
             transplant(T, y, y->right);
             y->right = z->right;            //depois se coloca a subárvore direita de z embaixo de y
             y->right->parent = y;
@@ -456,40 +514,7 @@ void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore r
     node_free(z);
 
     if (y_original_color == BLACK) {      //há problema se o nó que saiu era preto, se era vermelho a regra "vermelho não tem filho vermelho" 
-        rb_delete_fixup(T, x);          //continua valendo
-    }
-}
-
-
-
-void rb_delete_fixup(BST *T, Node *x) {
-    while (x != T->root && color_of(x) == BLACK) {
-        Node *w;
-        if (x == x->parent->left) {
-            w = x->parent->right;
-        }
-        if (w->color == RED) {
-            w->color = BLACK;
-            x->parent->color = RED;
-            left_rotate(T, x->parent);
-            w = x->parent->right;
-        }
-        if (color_of(w->left) == BLACK && color_of(w->right) == BLACK) {
-            w->color = RED;
-            x = x->parent;
-        } else {
-            if (color_of(w->right) == BLACK) {
-                w->left->color = BLACK;
-                w->color = RED;
-                right_rotate(T, w);
-                w = x->parent->right;
-            }
-            w->color = x->parent->color;
-            x->parent->color = BLACK;
-            w->right->color = BLACK;
-            left_rotate(T, x->parent);
-            x = T->root;
-        }
+        rb_delete_fixup(T, x, x_parent);  //continua valendo
     }
 }
 
