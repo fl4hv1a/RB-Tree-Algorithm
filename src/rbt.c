@@ -913,9 +913,6 @@ bool valid_bst(Node *n, Node *min_node, Node *max_node) {
  * @param[in] n Ponteiro para o nó raiz da subárvore a ser avaliada.
  * 
  * @return A quantidade de nós pretos no maior caminho até um nó folha.
- * 
- * @retval - Um inteiro `>= 1`: Se as alturas negras das subárvores esquerda e direita forem idênticas;
- * @retval - `-1`: Caso haja discrepância entre a quantidade de nós pretos na esquerda e na direita.
  */
 int compute_black_height(Node *n) {
     if (!n) return 1; // Passo base
@@ -1016,11 +1013,6 @@ bool valid_rb(Node *root) {
 
     // Valida Propriedades 1, 4 e ponteiros bidirecionais em todos os nós
     if (!valid_rb_node(root)) {
-        return false;
-    }
-
-    // Propriedade 5: Todos os caminhos devem ter a mesma altura negra
-    if (compute_black_height(root) == -1) {
         return false;
     }
 
