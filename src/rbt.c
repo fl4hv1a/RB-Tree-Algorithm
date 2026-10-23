@@ -5,10 +5,18 @@
 #include <assert.h>
 
 #define TAB_SIZE 4          // Quantos espaços devem ser utilizados para representar um "TAB" no terminal
+
+// Macros para utilizar cores do terminal
+#define COLOR_SEQUENCE(code) "\033[" code "m" // Gera uma sequência ANSI com um código de cor
+#define RESET_COLOR COLOR_SEQUENCE("0") // Reseta a cor do texto para a cor padrão
+#define RED_COLOR COLOR_SEQUENCE("31") // Define a cor do texto como vermelho
+#define GREEN_COLOR COLOR_SEQUENCE("32") // Define a cor do texto como verde
+#define BLUE_COLOR COLOR_SEQUENCE("34") // Define a cor do texto como azul
+
 // #define SHOW_STEPS       // A existência dessa diretiva controla a impressão detalhada dos testes
 
 typedef enum Color {
-    RED = 0, 
+    RED = 0,
     BLACK = 1
 } Color;
 
@@ -25,6 +33,17 @@ typedef struct BinarySearchTree {
 } BST;
 
 /**
+ * @brief Retorna a cor de um nó de uma árvore RB.
+ * 
+ * @param[in] n Ponteiro para o nó que se deseja saber a cor.
+ * 
+ * @returns A cor do nó `n`, se `n` for não-nulo, ou `BLACK` caso `n` seja nulo.
+ */
+Color color_of(Node *n) {
+    return n ? n->color : BLACK;
+}
+
+/**
  * @brief Encontra o maior entre dois inteiros.
  * 
  * @param[in] a O primeiro inteiro a ser comparado.
@@ -35,58 +54,6 @@ typedef struct BinarySearchTree {
  */
 int max(const int a, const int b) {
     return (a > b) ? a : b;
-}
-
-/**
- * @brief Retorna a altura de um nó (distância até o nó folha mais profundo entre as subárvores filhas).
- * 
- * @details Retorna diretamente a altura do nó se ele for não-nulo e -1 caso contrário.
- *          Retornar -1 em nós nulos torna o cálculo do balanceamento mais simples
- *          para nós folha.
- * 
- * @param[in] n Ponteiro para o nó do qual se deseja receber a altura.
- * 
- * @return Altura do nó `n`.
- */
-int height(Node *n) {
-    if(n) {
-        return n->height;
-    } else {
-        // Se 'n' for nulo, retornamos -1 para facilitar o cálculo da altura de nós folha.
-        return -1;
-    }
-}
-
-/**
- * @brief Recalcula e atualiza a altura de um nó.
- * 
- * @param[in] n Ponteiro para o nó que será atualizado.
- */
-void update_height(Node *n) {
-    if (n) {
-        // Se 'n' for folha, a expressão se torna "1 + (-1) = 0"
-        // (já que a altura de todo nó nulo é -1 por definição)
-        n->height = 1 + max(height(n->left), height(n->right));
-    }
-}
-
-/**
- * @brief Calcula o fator de balanceamento (FB) de um nó.
- * 
- * @details Retorna a diferença entre as alturas das subárvores filhas, ou `0`
- *          caso o nó seja nulo (para facilitar o cálculo do FB de nós folha).
- * 
- * @param[in] n Ponteiro para o nó do qual será calculado o balanceamento.
- * 
- * @return O fator de balanceamento do nó `n`.
- * 
- * @retval - Um valor `negativo`: Se a altura da subárvore direita for maior que a esquerda;
- * @retval - `0`: Se as duas subárvores tiverem a mesma altura;
- * @retval - Um valor `positivo`: Se a altura da subárvore esquerda for maior que a direita.
- */
-int get_balance(Node *n) {
-    if (!n) return 0; // Se o nó for nulo, já está "balanceado"
-    return height(n->left) - height(n->right);
 }
 
 /**
@@ -115,9 +82,9 @@ void transplant(BST *T, Node *u, Node *v) {
 }
 
 /**
- * @brief Realiza uma rotação à direita em um nó de uma árvore AVL.
+ * @brief Realiza uma rotação à direita em um nó de uma árvore RB.
  * 
- * @param[in] T Ponteiro para a árvore AVL onde será realizada a rotação.
+ * @param[in] T Ponteiro para a árvore RB onde será realizada a rotação.
  * @param[in] n Ponteiro para o nó que será rotacionado.
  */
 void right_rotate(BST *T, Node *n) {
@@ -138,16 +105,12 @@ void right_rotate(BST *T, Node *n) {
     if (RleftN) {
         RleftN->parent = n;
     }
-
-    // Atualiza as alturas
-    update_height(n);
-    update_height(leftN);
 }
 
 /**
- * @brief Realiza uma rotação à esquerda em um nó de uma árvore AVL.
+ * @brief Realiza uma rotação à esquerda em um nó de uma árvore RB.
  * 
- * @param[in] T Ponteiro para a árvore AVL onde será realizada a rotação.
+ * @param[in] T Ponteiro para a árvore RB onde será realizada a rotação.
  * @param[in] n Ponteiro para o nó que será rotacionado.
  */
 void left_rotate(BST *T, Node *n) {
@@ -167,51 +130,6 @@ void left_rotate(BST *T, Node *n) {
     // Se a subárvore `LrightN` existir, ela mudou de lado e seu novo pai é `n`
     if (LrightN) {
         LrightN->parent = n;
-    }
-
-    // Atualiza as alturas
-    update_height(n);
-    update_height(rightN);
-}
-
-/**
- * @brief Rebalanceia, por meio de rotações, um nó de uma árvore AVL.
- * 
- * @param[in] T Ponteiro para a árvore AVL onde será realizado o rebalanceamento.
- * @param[in] n Ponteiro para o nó que será rebalanceado.
- */
-void avl_node_rebalance(BST *T, Node *n) {
-    int balance = get_balance(n);
-    if (balance > ALLOWED_IMBALANCE) {
-        if (get_balance(n->left) < 0) { 
-            left_rotate(T, n->left); // Metade da rotação dupla à direita
-        }
-
-        right_rotate(T, n); // Rotação simples à direita
-    } else if (balance < -ALLOWED_IMBALANCE) {
-        if (get_balance(n->right) > 0) {
-            right_rotate(T, n->right); // Metade da rotação dupla à esquerda
-        }
-
-        left_rotate(T, n); // Rotação simples à esquerda
-    }
-    // Se `-ALLOWED_IMBALANCE < balance < ALLOWED_IMBALANCE`:
-    //      `n` já está balanceado, então não fazemos nada
-}
-
-/**
- * @brief Rebalanceia uma árvore AVL após uma modificação estrutural.
- * 
- * @param[in] T Ponteiro para a árvore AVL onde acontecerá o rebalanceamento.
- * @param[in] n Ponteiro para o nó mais profundo onde o balanceamento pode ter sido alterado.
- */
-void avl_balance(BST *T, Node *n) {
-    while (n) {
-        update_height(n); // Atualiza a altura do nó atual
-        
-        avl_node_rebalance(T, n); // Rebalanceia o nó atual
-        
-        n = n->parent; // Sobe para o próximo nó ancestral
     }
 }
 
@@ -346,27 +264,26 @@ void bst_insert(BST *T, Node *z) {
 }
 
 /**
- * @brief Insere um novo nó em uma árvore AVL e refaz o balanceamento.
+ * @brief Restaura as propriedades de uma árvore Vermelho-Preto (RB) após a inserção de um nó.
  * 
- * @param[in] T Ponteiro para a árvore AVL onde o nó deve ser inserido.
- * @param[in] z Ponteiro para o nó a ser inserido.
+ * @details Como o novo nó inserido `z` é inicialmente colorido de vermelho, a Propriedade 2
+ *          (a raiz deve ser preta) ou a Propriedade 4 (um nó vermelho não pode ter filhos vermelhos)
+ *          podem ser violadas. Esta função percorre a árvore de `z` em direção à raiz aplicando
+ *          recolorações (Caso 1) e rotações simples/duplas (Casos 2 e 3) até que todas as
+ *          propriedades RB sejam restabelecidas.
+ * 
+ * @param[in,out] T Ponteiro para a árvore RB onde ocorrerá o rebalanceamento.
+ * @param[in,out] z Ponteiro para o nó recém-inserido onde a verificação se iniciará.
  */
-void avl_insert(BST *T, Node *z) {
-    // Começa fazendo uma inserção BST comum
-    bst_insert(T, z);
-
-    // Começa a rebalancear a partir do nó inserido subindo até a raiz
-    avl_balance(T, z);
-}
-
 void rb_insert_fixup(BST *T, Node *z) {
-    while (z->parent->color == RED) {
+    while (color_of(z->parent) == RED) {
         if (z->parent == z->parent->parent->left) { // Testa se o pai de `z` é um filho à esquerda
             Node *y = z->parent->parent->right; // O tio de `z`
 
-            if (y->color == RED) { // O tio é vermelho
+            if (color_of(y) == RED) { // O tio é vermelho
                 z->parent->color = BLACK;
                 y->color = BLACK;
+                z->parent->parent->color = RED;
                 z = z->parent->parent;
             } else { // O tio é preto
                 if (z == z->parent->right) {
@@ -375,44 +292,45 @@ void rb_insert_fixup(BST *T, Node *z) {
                 }
                 z->parent->color = BLACK;
                 z->parent->parent->color = RED;
-                right_rotate(T, z);
+                right_rotate(T, z->parent->parent);
             }
         } else {
-            // Igual ao if da linha 364 trocando "right" e "left"
+            Node *y = z->parent->parent->left; // O tio de `z`
+
+            if (color_of(y) == RED) { // O tio é vermelho
+                z->parent->color = BLACK;
+                y->color = BLACK;
+                z->parent->parent->color = RED;
+                z = z->parent->parent;
+            } else { // O tio é preto
+                if (z == z->parent->left) {
+                    z = z->parent;
+                    right_rotate(T, z);
+                }
+                z->parent->color = BLACK;
+                z->parent->parent->color = RED;
+                left_rotate(T, z->parent->parent);
+            }
         }
     }
 
     T->root->color = BLACK;
 }
 
+/**
+ * @brief Insere um novo nó em uma árvore Vermelho-Preto (RB) e restaura suas propriedades.
+ * 
+ * @details Realiza primeiramente uma inserção padrão de árvore binária de busca (`bst_insert`),
+ *          garante que a cor inicial do novo nó seja vermelha (`RED`) e, em seguida, invoca
+ *          `rb_insert_fixup()` para corrigir eventuais violações estruturais ou de coloração.
+ * 
+ * @param[in,out] T Ponteiro para a árvore RB onde o nó deve ser inserido.
+ * @param[in,out] z Ponteiro para o nó a ser inserido.
+ */
 void rb_insert(BST *T, Node *z) {
-    Node *y; // pai de x
-    Node *x; // posição atual que no caso será a raiz
+    bst_insert(T, z);        // Faz a inserção padrão de BST
 
-    y = NULL; 
-    x = T->root;
-
-    while(x != NULL) { // enquanto x não for nulo, desce árvore
-        y = x; 
-
-        if (z->key < x->key) { // se a chave for menor que x, desce para o nó à esquerda, do contrário desce pela direita
-            x = x->left;
-        } else x = x->right;
-    }
-    
-    z->parent = y; // seu pai recebe o nó y
-    
-    if(y == NULL) { // se o pai não existir então é a raiz
-        T->root = z;
-    } else if(z->key < y->key) { // se z for menor que y, é o filho esquerdo, do contrário é o filho direito
-        y->left = z;
-    } else y->right = z;
-
-    z->left = NULL;
-    z->right = NULL;
-    z->color = RED; // seguindo a definição de árvore vermelho e preto o nó inserido fica vermelho
-
-    rb_insert_fixup(T,z); // chama o fixup para corrigir a árvore se não mais seguir todas as regras
+    rb_insert_fixup(T, z);   // Corrige possíveis violações RB
 }
 
 /**
@@ -521,92 +439,131 @@ Node *bst_delete(BST *T, Node *z) {
 }
 
 /**
- * @brief Remove, rebalanceia e desaloca um nó de uma árvore AVL.
+ * @brief Restaura as propriedades de uma árvore Vermelho-Preto (RB) após a remoção de um nó preto.
  * 
- * @param[in] T Ponteiro para a árvore AVL onde o nó será removido.
- * @param[in] z Ponteiro para o nó que será removido.
+ * @details Quando um nó preto é removido (ou movido), a Altura Negra (Propriedade 5) dos caminhos
+ *          que passavam por sua posição original diminui em 1. O nó `x` que ocupou essa posição
+ *          recebe conceitualmente um "preto extra". Esta função transfere esse peso extra em direção
+ *          à raiz ou o elimina por meio de recolorações e rotações baseadas na cor do irmão `w` de `x`
+ *          e dos filhos de `w` (Casos 1 a 4 do Cormen).
+ * 
+ * @param[in,out] T Ponteiro para a árvore RB onde ocorrerá o rebalanceamento.
+ * @param[in,out] x Ponteiro para o nó que ocupou a posição do nó removido (pode ser `NULL`).
+ * @param[in,out] x_parent Ponteiro para o nó pai de `x` (necessário para navegação caso `x` seja `NULL`).
  */
-void avl_delete(BST *T, Node *z) {
-    // Primeiro faz uma remoção BST simples
-    Node *fix_node_pin = bst_delete(T, z);
+void rb_delete_fixup(BST *T, Node *x, Node *x_parent) {
+    while (x != T->root && color_of(x) == BLACK) {
+        Node *w;
+        if (x == x_parent->left) { // `x` é filho à esquerda
+            w = x_parent->right;
 
-    // Depois começa o rebalanceamento subindo até chegar na raiz
-    avl_balance(T, fix_node_pin);
-}
+            if (color_of(w) == RED) { // Caso 1: O irmão `w` de `x` é vermelho
+                w->color = BLACK;
+                x_parent->color = RED;
+                left_rotate(T, x_parent);
+                w = x_parent->right;
+            }
+            if (color_of(w->left) == BLACK && color_of(w->right) == BLACK) { // Caso 2: Os dois filhos de `w` são pretos
+                w->color = RED;
+                x = x_parent;
+                x_parent = x->parent;
+            } else {
+                if (color_of(w->right) == BLACK) { // Caso 3: O filho direito de `w` é preto (e o esquerdo é vermelho)
+                    w->left->color = BLACK;
+                    w->color = RED;
+                    right_rotate(T, w);
+                    w = x_parent->right;
+                }
+                // Caso 4: O filho direito de `w` é vermelho
+                w->color = x_parent->color;
+                x_parent->color = BLACK;
+                w->right->color = BLACK;
+                left_rotate(T, x_parent);
+                x = T->root;
+            }
+        } else { // Simétrico: `x` é filho à direita
+            w = x_parent->left;
 
-void rb_delete(BST *T, Node *z){    // remove e desaloca um nó de uma árvore rubro-negra
-                                    //T é o ponteiro para a árvore RB onde o nó vai ser removido, z é o ponteiro para o nó que será removido
-    Node *y = z;                    //nó que vai sair da posição original
-    Color y_original_color = y -> color;
-    Node *x;                        //nó que ocupa a posição deixada por y
-
-    if(!z -> left){                 //caso z não tenha filho esquerdo, o filho direito sobe para o lugar de z
-        x = z -> right;
-        x -> parent = z -> parent;     //'x' fica no lugar de z, logo o pai dele é o pai de z
-        rb_transplant(T, z, z -> right);
-    } else if(!z -> right){         //caso z não possua filho direito
-        x = z -> left;
-        x -> parent = z -> parent;
-        rb_transplant(T, z, z -> left);
-    } else{                             //caso z possua dois filhos, então o sucessor em ordem de z toma o lugar dele
-        y = bst_minimum(z -> right);    //menor nó da subárvore direita (não tem filho esquerdo)
-        y_original_color = y -> color;  //o nó que sai é o y, se guarda a cor dele
-        x = y -> right;                 //o filho direto de y vai ocupar a posição que y deixa
-
-        if(y -> parent == z){           //y já era filho direto de z, x continua abaixo de y que vai para a posição de z,
-                                        //então o pai de x é o próprio y (x.p = y do livro)
-            x -> parent = y;            
-        }else{                                  
-            x -> parent = y -> parent;             //y está mais fundo na subárvore, primeiro se tira y do seu lugar e coloca x (filho direito de y) em seu lugar
-            rb_transplant(T, y, y -> right);
-            y -> right = z -> right;            //depois se coloca a subárvore direita de z embaixo de y
-            y -> right -> parent = y;
+            if (color_of(w) == RED) { // Caso 1
+                w->color = BLACK;
+                x_parent->color = RED;
+                right_rotate(T, x_parent);
+                w = x_parent->left;
+            }
+            if (color_of(w->right) == BLACK && color_of(w->left) == BLACK) { // Caso 2
+                w->color = RED;
+                x = x_parent;
+                x_parent = x->parent;
+            } else {
+                if (color_of(w->left) == BLACK) { // Caso 3
+                    w->right->color = BLACK;
+                    w->color = RED;
+                    left_rotate(T, w);
+                    w = x_parent->left;
+                }
+                // Caso 4
+                w->color = x_parent->color;
+                x_parent->color = BLACK;
+                w->left->color = BLACK;
+                right_rotate(T, x_parent);
+                x = T->root;
+            }
         }
-        rb_transplant(T, z, y);         //coloca y no lugar de z e liga a subárvore esquerda de z a ele
-        y -> left = z -> left;
-        y -> left -> parent = y;
-        y -> color = z -> color;        //y herda a cor de z, assim, na posição, a cor de z não mudou, apenas a cor original de y em sua posição antiga sendo deixada
-    } 
-    node_free(z);
-    if(y_original_color == BLACK){      //há problema se o nó que saiu era preto, se era vermelho a regra "vermelho não tem filho vermelho" 
-        rb_delete_fixup(T, x);          //continua valendo
+    }
+
+    if (x) {
+        x->color = BLACK;
     }
 }
 
-void rb_delete_fixup(BST *T, Node *x){        //Corrige a árvore após remoção de um nó preto
-                                              //x é o nó que ocupou o lugar do nó que foi removido e possui e carrega o nó preto que saiu
-                                              //O laço se livra desse nó extra
+/**
+ * @brief Remove, desaloca um nó de uma árvore Vermelho-Preto (RB) e restaura suas propriedades.
+ * 
+ * @details Substitui o nó `z` na árvore seguindo os três casos clássicos de remoção em BST
+ *          (sem filho esquerdo, sem filho direito ou com dois filhos usando o sucessor em-ordem `y`).
+ *          Rastreia a cor original do nó que efetivamente deixou sua posição na árvore (`y_original_color`).
+ *          Se essa cor era preta (`BLACK`), invoca `rb_delete_fixup()` a partir do nó substituto `x`
+ *          para recompor a altura negra e demais propriedades da árvore.
+ * 
+ * @param[in,out] T Ponteiro para a árvore RB onde o nó será removido.
+ * @param[in,out] z Ponteiro para o nó que será removido e desalocado.
+ */
+void rb_delete(BST *T, Node *z) {
+    Node *y = z;                    //nó que vai sair da posição original
+    Color y_original_color = y->color;
+    Node *x;                        //nó que ocupa a posição deixada por y
+    Node *x_parent = z->parent;     //rastreia o pai de x (necessário caso x seja NULL)
 
-    Node *w;                                  // 'w' é irmão de 'x', quase tudo é decidido por sua e cor e seus filhos
+    if (!z->left) {                 //caso z não tenha filho esquerdo, o filho direito sobe para o lugar de z
+        x = z->right;
+        transplant(T, z, z->right);
+    } else if (!z->right) {         //caso z não possua filho direito
+        x = z->left;
+        transplant(T, z, z->left);
+    } else {                             //caso z possua dois filhos, então o sucessor em ordem de z toma o lugar dele
+        y = bst_minimum(z->right);    //menor nó da subárvore direita (não tem filho esquerdo)
+        y_original_color = y->color;  //o nó que sai é o y, se guarda a cor dele
+        x = y->right;                 //o filho direto de y vai ocupar a posição que y deixa
 
-    while(x != T -> root && color_of(x) == BLACK){    //Repete quando 'x' for preto e não for a raiz
-        if(x == x -> parent -> left){                 //'x' é o filho a esquerda do pai
-            w = x -> parent -> right;                 //O irmão é filho direito do pai
-            
-            if(w -> color == RED){                    //Se o irmão for vermelho, o pai e os filhos dele são pretos
-                w -> color = BLACK;                   
-                x -> parent -> color = RED;           //Troca-se as cores
-                left_rotate(T, x -> parent);          //e rotaciona o pai para a esquerda
-                w = x -> parent -> right;             //atualiza w para ser preto
-                
-            }if(color_of(w -> left) == BLACK && color_of(w -> right) == BLACK){        //irmão preto com dois filhos pretos
-                w -> color = RED;                                                      //Muda a cor de 'w' para vermelho, o lado do irmão perde um preto
-                x = x -> parent;                                                       //e fica com a mesma altura-preta do lado de 'x' e o pai fica com um preto a menos em relação ao resto da árvore
-                                                                                       //o preto extra sobe, 'x' vira pai e o laço roda de novo a partir dele (?)
-                
-            } else {                                  //O irmão é preto e pelo menos um filho é vermelho
-            if(color_of(w -> right) == BLACK){        //
-                w -> left -> color = BLACK;
-                w -> color = RED;
-                right_rotate(T, w);
-                w = x -> parent -> right;
-            }
-            w -> color = x -> parent -> color;
-            x -> parent -> color = BLACK;
-            w -> right -> color = BLACK;
-            left_rotate(T, x -> parent);
-            x = T -> root;
+        if (y->parent == z) {           //y já era filho direto de z, x continua abaixo de y que vai para a posição de z,
+                                        //então o pai de x é o próprio y (x.p = y do livro)
+            x_parent = y;
+        } else {
+            x_parent = y->parent;
+            transplant(T, y, y->right);
+            y->right = z->right;            //depois se coloca a subárvore direita de z embaixo de y
+            y->right->parent = y;
         }
+        transplant(T, z, y);         //coloca y no lugar de z e liga a subárvore esquerda de z a ele
+        y->left = z->left;
+        y->left->parent = y;
+        y->color = z->color;        //y herda a cor de z, assim, na posição, a cor de z não mudou, apenas a cor original de y em sua posição antiga sendo deixada
+    } 
+
+    node_free(z);
+
+    if (y_original_color == BLACK) {      //há problema se o nó que saiu era preto, se era vermelho a regra "vermelho não tem filho vermelho" 
+        rb_delete_fixup(T, x, x_parent);  //continua valendo
     }
 }
 
@@ -632,7 +589,8 @@ int bst_size(Node *x) {
 void bst_printRec(Node *n) {
     if (n) {
         bst_printRec(n->left);
-        printf("%02d ", n->key);
+        printf((n->color == RED) ? RED_COLOR : BLUE_COLOR);
+        printf("%02d" RESET_COLOR " ", n->key);
         bst_printRec(n->right);
     }
 }
@@ -758,9 +716,9 @@ bool bst_check(Node *nd, const int *const data, const int N) {
 }
 
 /**
- * @brief Imprime uma representação textual da estrutura geometrica completa de uma subárvore BST deitada no terminal.
+ * @brief Imprime uma representação textual da estrutura geometrica completa de uma subárvore RB deitada no terminal.
  * 
- * @details Utiliza um percurso invertido (Direita -> Raiz -> Esquerda) e uma identação progressiva
+ * @details Utiliza um percurso invertido (Direita->Raiz->Esquerda) e uma identação progressiva
  *          para desenhar a árvore "deitada". A raiz aparece na margem esquerda do terminal,
  *          a subárvore direita cresce para a parte de cima e a esquerda para a parte de baixo.
  * 
@@ -777,7 +735,8 @@ void bst_printTreeRec(Node *root, int space) {
         for (int i = TAB_SIZE; i < space; i++) {
             printf(" ");
         }
-        printf("%02d\n", root->key);
+        printf((root->color == RED) ? RED_COLOR : BLUE_COLOR);
+        printf("%02d" RESET_COLOR "\n", root->key);
 
         bst_printTreeRec(root->left, space);
     }
@@ -923,26 +882,6 @@ int arr_remove(int *arr, int N, int value) {
 }
 
 /**
- * @brief Computa a altura real de uma subárvore percorrendo completamente todas as suas subárvores filhas.
- * 
- * @param[in] n Ponteiro para o nó raiz da subárvore a ser computada.
- * 
- * @return A altura real calculada.
- * 
- * @retval - Um inteiro `positivo`: Se `n` for uma subárvore não-nula;
- * @retval - `-1`: Se `n` for uma subárvore vazia (`NULL`).
- */
-int compute_real_height(Node *n) {
-    if (!n) return -1; // Passo base: subárvore vazia
-    
-    // Passo recursivo: Cálcula as alturas das subárvores filhas
-    int left_h = compute_real_height(n->left);
-    int right_h = compute_real_height(n->right);
-    
-    return 1 + max(left_h, right_h);
-}
-
-/**
  * @brief Verifica recursivamente se todos os nós de uma subárvore respeitam as propriedades BST.
  * 
  * @param[in] n Ponteiro para o nó raiz da subárvore a ser validada.
@@ -969,34 +908,54 @@ bool valid_bst(Node *n, Node *min_node, Node *max_node) {
 }
 
 /**
- * @brief Valida estruturalmente se uma subárvore obedece a todas as
- *        propriedades de uma árvore AVL.
+ * @brief Computa e valida recursivamente a Altura Negra de uma subárvore RB.
  * 
- * @param[in] n Ponteiro para o nó raiz da subárvore a ser validada.
+ * @param[in] n Ponteiro para o nó raiz da subárvore a ser avaliada.
  * 
- * @return Resultado da validação da subárvore.
- * 
- * @retval - `true`: Se for uma AVL perfeitamente válida;
- * @retval - `false`: Caso alguma propriedade seja violada.
+ * @return A quantidade de nós pretos no maior caminho até um nó folha.
  */
-bool valid_avl(Node *n) {
-    if (!n) return true; // Uma subárvore vazia é uma AVL válida
+int compute_black_height(Node *n) {
+    if (!n) return 1; // Passo base
 
-    // Valida se a altura armazenada no nó atual condiz com a sua altura real
-    if (n->height != compute_real_height(n)) return false;
+    int left_bh = compute_black_height(n->left);
+    int right_bh = compute_black_height(n->right);
 
-    // Valida se o balanceamento retornado no nó atual condiz com o seu balanceamento real
-    int balance = get_balance(n);
-    if (balance != compute_real_height(n->left) - compute_real_height(n->right)) {
+    // Soma 1 se o nó atual for preto, ou 0 se for vermelho
+    return ((n->color == BLACK) ? 1 : 0) + max(left_bh, right_bh);
+}
+
+/**
+ * @brief Valida recursivamente as propriedades locais dos nós de uma subárvore RB.
+ * 
+ * @details Verifica para cada nó da subárvore:
+ *          - Propriedade 1: Todo nó é vermelho (`RED`) ou preto (`BLACK`);
+ *          - Propriedade 4: Se um nó é vermelho, então ambos os seus filhos são pretos;
+ *          - Propriedade 5: Todos os caminhos até folhas devem ter o mesmo número de nós pretos;
+ *          - Integridade estrutural: Os ponteiros `parent` dos filhos apontam corretamente para o nó atual.
+ * 
+ * @param[in] n Ponteiro para o nó raiz da subárvore a ser verificada.
+ * 
+ * @return Resultado da validação local da subárvore.
+ * 
+ * @retval - `true`: Se todos os nós da subárvore respeitarem as propriedades locais;
+ * @retval - `false`: Caso alguma violação de cor ou de ponteiro pai seja encontrada.
+ */
+bool valid_rb_node(Node *n) {
+    if (!n) return true; // Uma subárvore vazia é válida por definição
+
+    // Propriedade 1: O nó deve ter uma cor válida (RED ou BLACK)
+    if (n->color != RED && n->color != BLACK) {
         return false;
     }
 
-    // Valida o fator de balanceamento
-    if (balance < -ALLOWED_IMBALANCE || balance > ALLOWED_IMBALANCE) {
-        return false; // O nó está desbalanceado, então não é uma AVL válida
+    // Propriedade 4: Um nó vermelho não pode ter filhos vermelhos (ambos devem ser pretos)
+    if (n->color == RED) {
+        if (color_of(n->left) == RED || color_of(n->right) == RED) {
+            return false;
+        }
     }
 
-    // Valida se os ponteiros estão corretamente bidirecionais
+    // Valida se os ponteiros pai-filho estão corretamente bidirecionais
     if (n->left && n->left->parent != n) {
         return false;
     }
@@ -1004,15 +963,64 @@ bool valid_avl(Node *n) {
         return false;
     }
 
-    // Valida a propriedade BST (menores à esquerda e maiores à direita)
-    if (!valid_bst(n, NULL, NULL)) return false;
+    // Propriedade 5: Todos os caminhos até folhas devem ter o mesmo número de nós pretos
+    if (compute_black_height(n->left) != compute_black_height(n->right)) {
+        return false;
+    }
 
     // Continua a validação descendo recursivamente para todos os nós descendentes
-    return valid_avl(n->left) && valid_avl(n->right);
+    return valid_rb_node(n->left) && valid_rb_node(n->right);
 }
 
 /**
- * @brief Valida exaustivamente uma estrutura AVL testando todas as permutações 
+ * @brief Valida estruturalmente se uma árvore obedece a todas as propriedades
+ *        de uma Árvore Vermelho-Preto (RB).
+ * 
+ * @details Realiza a checagem completa das 5 propriedades RB definidas no Cormen,
+ *          além das invariantes de árvore binária de busca (BST):
+ *          1. Todo nó é vermelho ou preto (`valid_rb_node`);
+ *          2. A raiz é preta (`color_of(root) == BLACK`) e seu pai é `NULL`;
+ *          3. Toda folha (`NULL`) é preta (`color_of(NULL) == BLACK`);
+ *          4. Se um nó é vermelho, então ambos os seus filhos são pretos (`valid_rb_node`);
+ *          5. Para cada nó, todos os caminhos simples dele até folhas descendentes contêm
+ *             o mesmo número de nós pretos (`compute_black_height(root) != -1`);
+ *          6. A árvore respeita a ordenação estrita de chaves de uma BST (`valid_bst`).
+ * 
+ * @param[in] root Ponteiro para o nó raiz da árvore RB a ser validada.
+ * 
+ * @return Resultado da validação completa da árvore.
+ * 
+ * @retval - `true`: Se for uma árvore Vermelho-Preto perfeitamente válida;
+ * @retval - `false`: Caso qualquer propriedade RB ou BST seja violada.
+ */
+bool valid_rb(Node *root) {
+    if (!root) return true; // Uma árvore vazia é uma RB válida
+
+    // O pai da raiz obrigatoriamente deve ser NULL
+    if (root->parent != NULL) {
+        return false;
+    }
+
+    // Propriedade 2: A raiz deve ser preta
+    if (color_of(root) != BLACK) {
+        return false;
+    }
+
+    // Valida a propriedade BST (menores à esquerda e maiores à direita)
+    if (!valid_bst(root, NULL, NULL)) {
+        return false;
+    }
+
+    // Valida Propriedades 1, 4 e ponteiros bidirecionais em todos os nós
+    if (!valid_rb_node(root)) {
+        return false;
+    }
+
+    return true;
+}
+
+/**
+ * @brief Valida exaustivamente uma estrutura RB testando todas as permutações 
  *        possíveis de inserções e remoções para um determinado conjunto de entrada.
  * 
  * @param[in] data_base Arranjo contendo o conjunto de chaves para os testes (deve estar ordenado!).
@@ -1025,11 +1033,11 @@ bool valid_avl(Node *n) {
  * @retval - `1`: Falha na alocação de memória para os arranjos auxiliares na heap;
  * @retval - `2`: Falha na alocação de memória para a raiz da árvore (`bst_alloc`);
  * @retval - `3`: Inconsistência de dados - `bst_check` falhou após uma INSERÇÃO;
- * @retval - `4`: Estrutura inválida - `valid_avl` falhou após uma INSERÇÃO;
+ * @retval - `4`: Estrutura inválida - `valid_rb` falhou após uma INSERÇÃO;
  * @retval - `5`: Inconsistência de dados - `bst_check` falhou após uma REMOÇÃO;
- * @retval - `6`: Estrutura inválida - `valid_avl` falhou após uma REMOÇÃO.
+ * @retval - `6`: Estrutura inválida - `valid_rb` falhou após uma REMOÇÃO.
  */
-int brute_force_avl_validation(const int *data_base, const int N, unsigned long long *tested_count) {
+int brute_force_rb_validation(const int *data_base, const int N, unsigned long long *tested_count) {
     int status = 0; // Inicializado com "Sucesso"
 
     int *data_insert = (int *) malloc(sizeof(int) * N);
@@ -1054,10 +1062,19 @@ int brute_force_avl_validation(const int *data_base, const int N, unsigned long 
                 goto cleanup;
             }
 
+            #ifdef SHOW_STEPS
+                printf("\n----------- teste nº %llu -----------\n\n", (*tested_count) + 1);
+            #endif
+
             // Teste de Inserções
             for (int i = 0; i < N; i++) {
                 Node *nd = node_alloc(data_insert[i]);
-                avl_insert(T, nd);
+                rb_insert(T, nd);
+
+                #ifdef SHOW_STEPS
+                    bst_print(T);
+                    bst_printTree(T);
+                #endif
 
                 if (!bst_check(T->root, data_insert, i + 1)) {
                     bst_free(T);
@@ -1065,19 +1082,28 @@ int brute_force_avl_validation(const int *data_base, const int N, unsigned long 
                     goto cleanup;
                 }
                 
-                if (!valid_avl(T->root)) {
+                if (!valid_rb(T->root)) {
                     bst_free(T);
-                    status = 4; // Estrutura AVL inválida
+                    status = 4; // Estrutura RB inválida
                     goto cleanup;
                 }
             }
+
+            #ifdef SHOW_STEPS
+                printf("Árvore após todas as INSERÇÕES:\n");
+                bst_printTree(T);
+            #endif
             
             int asize = N;
             memcpy(arr, data_insert, sizeof(int) * asize);
             
             // Teste de Remoções
             for (int i = 0; i < N; i++) {
-                avl_delete(T, bst_search(T->root, data_remove[i]));
+                rb_delete(T, bst_search(T->root, data_remove[i]));
+                #ifdef SHOW_STEPS
+                    bst_print(T);
+                    bst_printTree(T);
+                #endif
                 asize = arr_remove(arr, asize, data_remove[i]);
                 
                 if (!bst_check(T->root, arr, asize)) {
@@ -1086,12 +1112,17 @@ int brute_force_avl_validation(const int *data_base, const int N, unsigned long 
                     goto cleanup;
                 }
                 
-                if (!valid_avl(T->root)) {
+                if (!valid_rb(T->root)) {
                     bst_free(T);
-                    status = 6; // Estrutura AVL inválida
+                    status = 6; // Estrutura RB inválida
                     goto cleanup;
                 }
             }
+
+            #ifdef SHOW_STEPS
+                printf("Árvore após todas as REMOÇÕES:\n");
+                bst_printTree(T);
+            #endif
 
             bst_free(T);
             (*tested_count)++;
@@ -1117,9 +1148,9 @@ int main() {
 
     unsigned long long permutacoesTestadas = 0ULL;
 
-    printf("\nIniciando bateria de testes AVL...\n");
+    printf("\nIniciando bateria de testes RB...\n");
 
-    int status = brute_force_avl_validation(DATA_BASE, N, &permutacoesTestadas);
+    int status = brute_force_rb_validation(DATA_BASE, N, &permutacoesTestadas);
 
     if (status == 0) {
         printf("\n%llu permutações distintas de inserções e remoções foram validadas com sucesso!\n", permutacoesTestadas);
@@ -1140,13 +1171,13 @@ int main() {
                 printf("Código [3]: Inconsistência nos dados (\"bst_check\" falhou) após uma inserção.\n");
                 break;
             case 4:
-                printf("Código [4]: Estrutura inválida (\"valid_avl\" falhou) após uma inserção.\n");
+                printf("Código [4]: Estrutura inválida (\"valid_rb\" falhou) após uma inserção.\n");
                 break;
             case 5:
                 printf("Código [5]: Inconsistência nos dados (\"bst_check\" falhou) após uma remoção.\n");
                 break;
             case 6:
-                printf("Código [6]: Estrutura inválida (\"valid_avl\" falhou) após uma remoção.\n");
+                printf("Código [6]: Estrutura inválida (\"valid_rb\" falhou) após uma remoção.\n");
                 break;
             default:
                 printf("Código [?]: Erro desconhecido.\n");
