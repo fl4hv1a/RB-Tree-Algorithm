@@ -74,9 +74,9 @@ void transplant(BST *T, Node *u, Node *v) {
 }
 
 /**
- * @brief Realiza uma rotação à direita em um nó de uma árvore AVL.
+ * @brief Realiza uma rotação à direita em um nó de uma árvore RB.
  * 
- * @param[in] T Ponteiro para a árvore AVL onde será realizada a rotação.
+ * @param[in] T Ponteiro para a árvore RB onde será realizada a rotação.
  * @param[in] n Ponteiro para o nó que será rotacionado.
  */
 void right_rotate(BST *T, Node *n) {
@@ -100,9 +100,9 @@ void right_rotate(BST *T, Node *n) {
 }
 
 /**
- * @brief Realiza uma rotação à esquerda em um nó de uma árvore AVL.
+ * @brief Realiza uma rotação à esquerda em um nó de uma árvore RB.
  * 
- * @param[in] T Ponteiro para a árvore AVL onde será realizada a rotação.
+ * @param[in] T Ponteiro para a árvore RB onde será realizada a rotação.
  * @param[in] n Ponteiro para o nó que será rotacionado.
  */
 void left_rotate(BST *T, Node *n) {
@@ -255,6 +255,18 @@ void bst_insert(BST *T, Node *z) {
     }
 }
 
+/**
+ * @brief Restaura as propriedades de uma árvore Vermelho-Preto (RB) após a inserção de um nó.
+ * 
+ * @details Como o novo nó inserido `z` é inicialmente colorido de vermelho, a Propriedade 2
+ *          (a raiz deve ser preta) ou a Propriedade 4 (um nó vermelho não pode ter filhos vermelhos)
+ *          podem ser violadas. Esta função percorre a árvore de `z` em direção à raiz aplicando
+ *          recolorações (Caso 1) e rotações simples/duplas (Casos 2 e 3) até que todas as
+ *          propriedades RB sejam restabelecidas.
+ * 
+ * @param[in,out] T Ponteiro para a árvore RB onde ocorrerá o rebalanceamento.
+ * @param[in,out] z Ponteiro para o nó recém-inserido onde a verificação se iniciará.
+ */
 void rb_insert_fixup(BST *T, Node *z) {
     while (color_of(z->parent) == RED) {
         if (z->parent == z->parent->parent->left) { // Testa se o pai de `z` é um filho à esquerda
@@ -297,6 +309,16 @@ void rb_insert_fixup(BST *T, Node *z) {
     T->root->color = BLACK;
 }
 
+/**
+ * @brief Insere um novo nó em uma árvore Vermelho-Preto (RB) e restaura suas propriedades.
+ * 
+ * @details Realiza primeiramente uma inserção padrão de árvore binária de busca (`bst_insert`),
+ *          garante que a cor inicial do novo nó seja vermelha (`RED`) e, em seguida, invoca
+ *          `rb_insert_fixup()` para corrigir eventuais violações estruturais ou de coloração.
+ * 
+ * @param[in,out] T Ponteiro para a árvore RB onde o nó deve ser inserido.
+ * @param[in,out] z Ponteiro para o nó a ser inserido.
+ */
 void rb_insert(BST *T, Node *z) {
     bst_insert(T, z);        // Faz a inserção padrão de BST
 
@@ -408,6 +430,19 @@ Node *bst_delete(BST *T, Node *z) {
     return fix_node_pin;
 }
 
+/**
+ * @brief Restaura as propriedades de uma árvore Vermelho-Preto (RB) após a remoção de um nó preto.
+ * 
+ * @details Quando um nó preto é removido (ou movido), a Altura Negra (Propriedade 5) dos caminhos
+ *          que passavam por sua posição original diminui em 1. O nó `x` que ocupou essa posição
+ *          recebe conceitualmente um "preto extra". Esta função transfere esse peso extra em direção
+ *          à raiz ou o elimina por meio de recolorações e rotações baseadas na cor do irmão `w` de `x`
+ *          e dos filhos de `w` (Casos 1 a 4 do Cormen).
+ * 
+ * @param[in,out] T Ponteiro para a árvore RB onde ocorrerá o rebalanceamento.
+ * @param[in,out] x Ponteiro para o nó que ocupou a posição do nó removido (pode ser `NULL`).
+ * @param[in,out] x_parent Ponteiro para o nó pai de `x` (necessário para navegação caso `x` seja `NULL`).
+ */
 void rb_delete_fixup(BST *T, Node *x, Node *x_parent) {
     while (x != T->root && color_of(x) == BLACK) {
         Node *w;
@@ -474,10 +509,16 @@ void rb_delete_fixup(BST *T, Node *x, Node *x_parent) {
 }
 
 /**
- * @brief Remove e desaloca um nó de uma árvore RB.
+ * @brief Remove, desaloca um nó de uma árvore Vermelho-Preto (RB) e restaura suas propriedades.
  * 
- * @param[in] T Ponteiro para a árvore RB onde o nó será removido.
- * @param[in] z Ponteiro para o nó que será removido.
+ * @details Substitui o nó `z` na árvore seguindo os três casos clássicos de remoção em BST
+ *          (sem filho esquerdo, sem filho direito ou com dois filhos usando o sucessor em-ordem `y`).
+ *          Rastreia a cor original do nó que efetivamente deixou sua posição na árvore (`y_original_color`).
+ *          Se essa cor era preta (`BLACK`), invoca `rb_delete_fixup()` a partir do nó substituto `x`
+ *          para recompor a altura negra e demais propriedades da árvore.
+ * 
+ * @param[in,out] T Ponteiro para a árvore RB onde o nó será removido.
+ * @param[in,out] z Ponteiro para o nó que será removido e desalocado.
  */
 void rb_delete(BST *T, Node *z) {
     Node *y = z;                    //nó que vai sair da posição original
