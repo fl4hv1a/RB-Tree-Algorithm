@@ -321,8 +321,8 @@ void rb_insert_fixup(BST *T, Node *z) {
  * @brief Insere um novo nó em uma árvore Vermelho-Preto (RB) e restaura suas propriedades.
  * 
  * @details Realiza primeiramente uma inserção padrão de árvore binária de busca (`bst_insert`),
- *          garante que a cor inicial do novo nó seja vermelha (`RED`) e, em seguida, invoca
- *          `rb_insert_fixup()` para corrigir eventuais violações estruturais ou de coloração.
+ *          em seguida, invoca `rb_insert_fixup()` para corrigir eventuais violações estruturais
+ *          ou de coloração.
  * 
  * @param[in,out] T Ponteiro para a árvore RB onde o nó deve ser inserido.
  * @param[in,out] z Ponteiro para o nó a ser inserido.
@@ -983,7 +983,7 @@ bool valid_rb_node(Node *n) {
  *          3. Toda folha (`NULL`) é preta (`color_of(NULL) == BLACK`);
  *          4. Se um nó é vermelho, então ambos os seus filhos são pretos (`valid_rb_node`);
  *          5. Para cada nó, todos os caminhos simples dele até folhas descendentes contêm
- *             o mesmo número de nós pretos (`compute_black_height(root) != -1`);
+ *             o mesmo número de nós pretos;
  *          6. A árvore respeita a ordenação estrita de chaves de uma BST (`valid_bst`).
  * 
  * @param[in] root Ponteiro para o nó raiz da árvore RB a ser validada.
