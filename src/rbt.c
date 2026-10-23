@@ -5,6 +5,14 @@
 #include <assert.h>
 
 #define TAB_SIZE 4          // Quantos espaços devem ser utilizados para representar um "TAB" no terminal
+
+// Macros para utilizar cores do terminal
+#define COLOR_SEQUENCE(code) "\033[" code "m" // Gera uma sequência ANSI com um código de cor
+#define RESET_COLOR COLOR_SEQUENCE("0") // Reseta a cor do texto para a cor padrão
+#define RED_COLOR COLOR_SEQUENCE("31") // Define a cor do texto como vermelho
+#define GREEN_COLOR COLOR_SEQUENCE("32") // Define a cor do texto como verde
+#define BLUE_COLOR COLOR_SEQUENCE("34") // Define a cor do texto como azul
+
 // #define SHOW_STEPS       // A existência dessa diretiva controla a impressão detalhada dos testes
 
 typedef enum Color {
@@ -581,7 +589,8 @@ int bst_size(Node *x) {
 void bst_printRec(Node *n) {
     if (n) {
         bst_printRec(n->left);
-        printf("%02d ", n->key);
+        printf((n->color == RED) ? RED_COLOR : BLUE_COLOR);
+        printf("%02d" RESET_COLOR " ", n->key);
         bst_printRec(n->right);
     }
 }
@@ -726,7 +735,8 @@ void bst_printTreeRec(Node *root, int space) {
         for (int i = TAB_SIZE; i < space; i++) {
             printf(" ");
         }
-        printf("%02d\n", root->key);
+        printf((root->color == RED) ? RED_COLOR : BLUE_COLOR);
+        printf("%02d" RESET_COLOR "\n", root->key);
 
         bst_printTreeRec(root->left, space);
     }
