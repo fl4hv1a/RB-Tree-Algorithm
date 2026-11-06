@@ -19,8 +19,7 @@
 
 # Remoção (foco no irmão)
 
-## Passo 0: Faça uma remoção BST comum. Se o nó removido era preto, prossiga com os passos abaixo:
-- Seja `x` o nó substituto do nó removido (nulo ou não):
+## Passo 0: Faça uma remoção BST comum. Se o nó removido era preto, prossiga com os passos abaixo. Se o nó removido tinha 1 ou 0 filhos, `x` será o nó que substituiu o nó removido; Se o nó removido tinha 2 filhos, `x` apontará para a posição original do nó que substituiu o nó removido.
 
 ### Caso 1 - Irmão vermelho
 * **O que fazer:** O irmão fica preto, o pai fica vermelho, rotacionamos o pai na direção de `x`.
@@ -36,4 +35,4 @@
 
 ### Caso 4 - Irmão com filho externo vermelho
 * **O que fazer:** O irmão copia a cor do pai, o pai fica preto, o filho externo do irmão fica preto e rotacionamos o pai na direção de `x`.
-* **Próximo passo:** Pinte o nó `x` final de preto e encerre aqui.
+* **Próximo passo:** Pinte o nó `x` final de preto (se for não-nulo) e encerre aqui.
